@@ -159,6 +159,22 @@ describe('iterator', function () {
   });
 
   describe('unhappy path', function () {
+    it('should fail with bad path', function (done) {
+      var options = { now: new Date(), strip: 2 };
+      extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar' + 'does-not-exist')), TARGET, options, function (err) {
+        assert.ok(!!err);
+        done();
+      });
+    });
+
+    it('should fail with bad stream', function (done) {
+      var options = { now: new Date(), strip: 2 };
+      extract(new TarIterator(fs.createReadStream(path.join(DATA_DIR, 'fixture.tar' + 'does-not-exist'))), TARGET, options, function (err) {
+        assert.ok(!!err);
+        done();
+      });
+    });
+
     it('should fail with too large strip', function (done) {
       var options = { now: new Date(), strip: 2 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, function (err) {
