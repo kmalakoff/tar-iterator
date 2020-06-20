@@ -13,16 +13,19 @@ var TarIterator = require('tar-iterator'));
 (async function() {
   let iterator = new TarIterator('/path/to/archive');
 
-  const links = [];
-  const symlinks = [];
-  for await (const entry of iterator) {
-    if (entry.type === 'link') links.push(entry);
-    if (entry.type === 'symlink') symlinks.push(entry);
-    else await entry.create(dest, options);
-  }
+  try {
+    const links = [];
+    for await (const entry of iterator) {
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
+      else await entry.create(dest, options);
+    }
 
-  // create links after directories and files
-  for (const entry of links) await entry.create(dest, options);
+    // create links after directories and files
+    for (const entry of links) await entry.create(dest, options);
+  } catch (err) {
+    assert.ok(!err);
+  }
 
   iterator.destroy();
   iterator = null;
@@ -31,14 +34,19 @@ var TarIterator = require('tar-iterator'));
 (async function() {
   let iterator = new TarIterator(fs.createReadStream('/path/to/archive'));
 
-  const links = [];
-  for await (const entry of iterator) {
-    if (entry.type === 'symlink') links.push(entry);
-    else await entry.create(dest, options);
-  }
+  try {
+    const links = [];
+    for await (const entry of iterator) {
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
+      else await entry.create(dest, options);
+    }
 
-  // create links after directories and files
-  for (const entry of links) await entry.create(dest, options);
+    // create links after directories and files
+    for (const entry of links) await entry.create(dest, options);
+  } catch (err) {
+    assert.ok(!err);
+  }
 
   iterator.destroy();
   iterator = null;
@@ -55,18 +63,20 @@ var TarIterator = require('tar-iterator'));
 (async function() {
   let iterator = new TarIterator('/path/to/archive');
 
-  const links = [];
-  let entry = await iterator.next();
-  while (entry) {
-    if (entry.type === 'symlink') links.push(entry);
-    else await entry.create(dest, options);
-    entry = await iterator.next();
+  try {
+    const links = [];
+    for await (const entry of iterator) {
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
+      else await entry.create(dest, options);
+    }
+
+    // create links after directories and files
+    for (const entry of links) await entry.create(dest, options);
+  } catch (err) {
+    assert.ok(!err);
   }
 
-  // create links after directories and files
-  for (entry of links) {
-    await entry.create(dest, options);
-  }
   iterator.destroy();
   iterator = null;
 })();
@@ -75,18 +85,23 @@ var TarIterator = require('tar-iterator'));
 (async function() {
   let iterator = new TarIterator('/path/to/archive');
 
-  const links = [];
-  await iterator.forEach(
-    async function (entry) {
-      if (entry.type === 'link') links.unshift(entry);
-      else if (entry.type === 'symlink') links.push(entry);
-      else await entry.create(dest, options);
-    },
-    { concurrency: Infinity }
-  );
+  try {
+    const links = [];
+    await iterator.forEach(
+      async function (entry) {
+        if (entry.type === 'link') links.unshift(entry);
+        else if (entry.type === 'symlink') links.push(entry);
+        else await entry.create(dest, options);
+      },
+      { concurrency: Infinity }
+    );
 
-  // create links after directories and files
-  for (const entry of links) await entry.create(dest, options);
+    // create links after directories and files
+    for (const entry of links) await entry.create(dest, options);
+  } catch (err) {
+    aseert.ok(!err);
+  }
+
   iterator.destroy();
   iterator = null;
 })();
@@ -115,7 +130,7 @@ iterator.forEach(
   },
   { callbacks: true, concurrency: 1 },
   function (err) {
-    if (err) return callback(err);
+    assert.ok(!err);
 
     // create links after directories and files
     var queue = new Queue();
@@ -124,6 +139,9 @@ iterator.forEach(
       queue.defer(entry.create.bind(entry, dest, options));
     }
     queue.await(callback);
+
+    iterator.destroy();
+    iterator = null;
   }
 );
 ```
