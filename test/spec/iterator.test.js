@@ -4,6 +4,8 @@ var mkpath = require('mkpath');
 var path = require('path');
 var fs = require('fs');
 var Queue = require('queue-cb');
+var bz2 = require('unbzip2-stream');
+var zlib = require('zlib');
 
 var TarIterator = require('../..');
 var validateFiles = require('../lib/validateFiles');
@@ -135,7 +137,36 @@ describe('iterator', function () {
 
     it('extract - stream', function (done) {
       var options = { now: new Date() };
-      extract(new TarIterator(fs.createReadStream(path.join(DATA_DIR, 'fixture.tar'))), TARGET, options, function (err) {
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar'));
+      extract(new TarIterator(source), TARGET, options, function (err) {
+        assert.ok(!err);
+
+        validateFiles(options, 'tar', function (err) {
+          assert.ok(!err);
+          done();
+        });
+      });
+    });
+
+    it('extract - stream bz2', function (done) {
+      var options = { now: new Date() };
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.bz2'));
+      source = source.pipe(bz2());
+      extract(new TarIterator(source), TARGET, options, function (err) {
+        assert.ok(!err);
+
+        validateFiles(options, 'tar', function (err) {
+          assert.ok(!err);
+          done();
+        });
+      });
+    });
+
+    it('extract - stream gz', function (done) {
+      var options = { now: new Date() };
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.gz'));
+      source = source.pipe(zlib.createUnzip());
+      extract(new TarIterator(source), TARGET, options, function (err) {
         assert.ok(!err);
 
         validateFiles(options, 'tar', function (err) {
