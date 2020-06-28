@@ -1,3 +1,4 @@
+require('../lib/patch');
 var assert = require('assert');
 var rimraf = require('rimraf');
 var mkpath = require('mkpath');
