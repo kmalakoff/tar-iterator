@@ -3,6 +3,7 @@ var assert = require('assert');
 var rimraf = require('rimraf');
 var mkpath = require('mkpath');
 var path = require('path');
+var assign = require('object-assign');
 
 var TarIterator = require('../..');
 var validateFiles = require('../lib/validateFiles');
@@ -58,7 +59,13 @@ describe('asyncIterator', function () {
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+        try {
+          await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+          assert.ok(false);
+        } catch (err) {
+          assert.ok(err);
+        }
+        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, assign({ force: true }, options));
         await validateFiles(options, 'tar');
       } catch (err) {
         assert.ok(!err);
