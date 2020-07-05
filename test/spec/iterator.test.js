@@ -3,6 +3,7 @@ var assert = require('assert');
 var rimraf = require('rimraf');
 var mkpath = require('mkpath');
 var path = require('path');
+var assign = require('object-assign');
 var fs = require('fs');
 var Queue = require('queue-cb');
 var bz2 = require('unbzip2-stream');
@@ -198,11 +199,15 @@ describe('iterator', function () {
           assert.ok(!err);
 
           extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, function (err) {
-            assert.ok(!err);
+            assert.ok(err);
 
-            validateFiles(options, 'tar', function (err) {
+            extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, assign({ force: true }, options), function (err) {
               assert.ok(!err);
-              done();
+
+              validateFiles(options, 'tar', function (err) {
+                assert.ok(!err);
+                done();
+              });
             });
           });
         });
