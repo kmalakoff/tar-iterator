@@ -1,6 +1,6 @@
 {
   "name": "tar-iterator",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Extract contents from tar archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",
@@ -78,6 +78,6 @@
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {
-    "node": ">=0.8"
+    "node": ">=0.12"
   }
 }
