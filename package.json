@@ -57,7 +57,7 @@
     "once": "^1.4.0",
     "queue-cb": "^1.1.6",
     "rimraf": "^2.7.1",
-    "tar-stream-compat": "^2.1.4"
+    "tar-stream-compat": "^2.1.5"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
