@@ -1,6 +1,6 @@
 {
   "name": "tar-iterator",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Extract contents from tar archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",
@@ -57,7 +57,7 @@
     "once": "^1.4.0",
     "queue-cb": "^1.1.6",
     "rimraf": "^2.7.1",
-    "tar-stream-compat": "^2.1.4"
+    "tar-stream-compat": "^2.1.5"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
