@@ -1,3 +1,4 @@
+require('./lib/polyfills');
 var BaseIterator = require('extract-base-iterator');
 
 module.exports = require('./lib/TarIterator');
