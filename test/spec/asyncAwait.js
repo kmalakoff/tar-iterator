@@ -3,7 +3,7 @@ var assert = require('assert');
 var rimraf = require('rimraf');
 var mkpath = require('mkpath');
 var path = require('path');
-var assign = require('object-assign');
+var assign = require('just-extend');
 
 var TarIterator = require('../..');
 var validateFiles = require('../lib/validateFiles');
