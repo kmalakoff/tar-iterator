@@ -19,6 +19,6 @@
     "rimraf": "^2.7.1"
   },
   "engines": {
-    "node": "lts"
+    "node": ">=8"
   }
 }
