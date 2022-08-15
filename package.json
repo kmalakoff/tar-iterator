@@ -62,7 +62,7 @@
     "once": "^1.4.0",
     "queue-cb": "^1.1.7",
     "rimraf": "^2.7.1",
-    "tar-stream-compat": "^2.1.5"
+    "tar-stream-compat": "^2.2.0"
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^5.33.0",
