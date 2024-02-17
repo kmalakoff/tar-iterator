@@ -3,7 +3,7 @@ const BaseIterator = require('extract-base-iterator').default;
 const fs = require('fs');
 const eos = require('end-of-stream');
 
-const waitForAccess = require('./lib/waitForAccess');
+const waitForAccess = require('./lib/waitForAccess.cjs');
 
 function FileEntry(attributes, stream, lock) {
   BaseIterator.FileEntry.call(this, attributes);
