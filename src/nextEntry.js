@@ -1,19 +1,19 @@
-var once = require('once');
-var path = require('path');
-var compact = require('lodash.compact');
-var assign = require('just-extend');
+const once = require('once');
+const path = require('path');
+const compact = require('lodash.compact');
+const assign = require('just-extend');
 
-var BaseIterator = require('extract-base-iterator');
-var DirectoryEntry = BaseIterator.DirectoryEntry;
-var FileEntry = require('./FileEntry');
-var LinkEntry = BaseIterator.LinkEntry;
-var SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
+const BaseIterator = require('extract-base-iterator').default;
+const DirectoryEntry = BaseIterator.DirectoryEntry;
+const FileEntry = require('./FileEntry');
+const LinkEntry = BaseIterator.LinkEntry;
+const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
 
 function nextEntry(next, iterator, callback) {
-  var extract = iterator.extract;
+  const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
-  var _callback = callback;
+  const _callback = callback;
   callback = once(function callback(err, entry, next) {
     extract.removeListener('entry', onEntry);
     extract.removeListener('error', onError);
@@ -26,12 +26,12 @@ function nextEntry(next, iterator, callback) {
     _callback(err, err || !entry ? null : entry);
   });
 
-  var onError = callback;
-  var onEnd = callback.bind(null, null);
-  var onEntry = function onEntry(header, stream, next) {
+  const onError = callback;
+  const onEnd = callback.bind(null, null);
+  const onEntry = function onEntry(header, stream, next) {
     if (iterator.done) return callback(null, null, next);
 
-    var attributes = assign({}, header);
+    const attributes = assign({}, header);
     attributes.path = compact(header.name.split(path.sep)).join(path.sep);
     attributes.mtime = new Date(attributes.mtime);
 
@@ -52,7 +52,7 @@ function nextEntry(next, iterator, callback) {
     }
 
     stream.resume(); // drain stream
-    return callback(new Error('Unrecognized entry type: ' + attributes.type), null, next);
+    return callback(new Error(`Unrecognized entry type: ${attributes.type}`), null, next);
   };
 
   extract.on('entry', onEntry);

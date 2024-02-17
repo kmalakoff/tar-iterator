@@ -1,17 +1,17 @@
 require('../lib/patch');
-var assert = require('assert');
-var rimraf = require('rimraf');
-var mkpath = require('mkpath');
-var path = require('path');
-var assign = require('just-extend');
+const assert = require('assert');
+const rimraf = require('rimraf');
+const mkpath = require('mkpath');
+const path = require('path');
+const assign = require('just-extend');
 
-var TarIterator = require('../..');
-var validateFiles = require('../lib/validateFiles');
+const TarIterator = require('tar-iterator');
+const validateFiles = require('../lib/validateFiles');
 
-var constants = require('../lib/constants');
-var TMP_DIR = constants.TMP_DIR;
-var TARGET = constants.TARGET;
-var DATA_DIR = constants.DATA_DIR;
+const constants = require('../lib/constants');
+const TMP_DIR = constants.TMP_DIR;
+const TARGET = constants.TARGET;
+const DATA_DIR = constants.DATA_DIR;
 
 async function extract(iterator, dest, options) {
   const links = [];
@@ -25,17 +25,17 @@ async function extract(iterator, dest, options) {
   for (const entry of links) await entry.create(dest, options);
 }
 
-describe('asyncIterator', function () {
-  beforeEach(function (callback) {
-    rimraf(TMP_DIR, function (err) {
+describe('asyncIterator', () => {
+  beforeEach((callback) => {
+    rimraf(TMP_DIR, (err) => {
       if (err && err.code !== 'EEXIST') return callback(err);
       mkpath(TMP_DIR, callback);
     });
   });
 
-  describe('happy path', function () {
-    it('extract - no strip', async function () {
-      var options = { now: new Date() };
+  describe('happy path', () => {
+    it('extract - no strip', async () => {
+      const options = { now: new Date() };
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
@@ -44,8 +44,8 @@ describe('asyncIterator', function () {
       }
     });
 
-    it('extract - strip 1', async function () {
-      var options = { now: new Date(), strip: 1 };
+    it('extract - strip 1', async () => {
+      const options = { now: new Date(), strip: 1 };
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
@@ -54,8 +54,8 @@ describe('asyncIterator', function () {
       }
     });
 
-    it('extract multiple times', async function () {
-      var options = { now: new Date(), strip: 1 };
+    it('extract multiple times', async () => {
+      const options = { now: new Date(), strip: 1 };
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
@@ -73,9 +73,9 @@ describe('asyncIterator', function () {
     });
   });
 
-  describe('unhappy path', function () {
-    it('should fail with too large strip', async function () {
-      var options = { now: new Date(), strip: 2 };
+  describe('unhappy path', () => {
+    it('should fail with too large strip', async () => {
+      const options = { now: new Date(), strip: 2 };
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         assert.ok(false);

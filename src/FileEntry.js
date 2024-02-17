@@ -1,9 +1,9 @@
-var inherits = require('inherits');
-var BaseIterator = require('extract-base-iterator');
-var fs = require('fs');
-var eos = require('end-of-stream');
+const inherits = require('inherits');
+const BaseIterator = require('extract-base-iterator').default;
+const fs = require('fs');
+const eos = require('end-of-stream');
 
-var waitForAccess = require('./lib/waitForAccess');
+const waitForAccess = require('./lib/waitForAccess');
 
 function FileEntry(attributes, stream, lock) {
   BaseIterator.FileEntry.call(this, attributes);
@@ -20,7 +20,7 @@ FileEntry.prototype.create = function create(dest, options, callback) {
     options = null;
   }
 
-  var self = this;
+  const self = this;
   if (typeof callback === 'function') {
     options = options || {};
     return BaseIterator.FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
@@ -39,13 +39,13 @@ FileEntry.prototype.create = function create(dest, options, callback) {
   });
 };
 
-FileEntry.prototype._writeFile = function _writeFile(fullPath, options, callback) {
+FileEntry.prototype._writeFile = function _writeFile(fullPath, _options, callback) {
   if (!this.stream) return callback(new Error('Zip FileEntry missing stream. Check for calling create multiple times'));
 
-  var stream = this.stream;
+  const stream = this.stream;
   this.stream = null;
-  var res = stream.pipe(fs.createWriteStream(fullPath));
-  eos(res, function (err) {
+  const res = stream.pipe(fs.createWriteStream(fullPath));
+  eos(res, (err) => {
     err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occassionally
   });
 };

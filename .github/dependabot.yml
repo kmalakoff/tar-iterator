@@ -6,6 +6,7 @@ updates:
       interval: daily
     ignore:
       - dependency-name: 'rimraf'
+      - dependency-name: 'tar-stream-compat'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
