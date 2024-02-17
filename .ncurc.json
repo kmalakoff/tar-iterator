@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["rimraf"]
+  "reject": ["rimraf", "tar-stream-compat"]
 }
