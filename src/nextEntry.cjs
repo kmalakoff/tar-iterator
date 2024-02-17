@@ -5,7 +5,7 @@ const assign = require('just-extend');
 
 const BaseIterator = require('extract-base-iterator').default;
 const DirectoryEntry = BaseIterator.DirectoryEntry;
-const FileEntry = require('./FileEntry');
+const FileEntry = require('./FileEntry.cjs');
 const LinkEntry = BaseIterator.LinkEntry;
 const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
 

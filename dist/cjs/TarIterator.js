@@ -12,9 +12,9 @@ var tarStream = require("tar-stream-compat");
 var eos = require("end-of-stream");
 var Queue = require("queue-cb");
 var BaseIterator = require("extract-base-iterator").default;
-var nextEntry = require("./nextEntry");
-var fifoRemove = require("./lib/fifoRemove");
-var Lock = require("./lib/Lock");
+var nextEntry = require("./nextEntry.js");
+var fifoRemove = require("./lib/fifoRemove.js");
+var Lock = require("./lib/Lock.js");
 function TarIterator(source, options) {
     var _this = this;
     if (!_instanceof(this, TarIterator)) return new TarIterator(source, options);

@@ -5,7 +5,7 @@ var compact = require("lodash.compact");
 var assign = require("just-extend");
 var BaseIterator = require("extract-base-iterator").default;
 var DirectoryEntry = BaseIterator.DirectoryEntry;
-var FileEntry = require("./FileEntry");
+var FileEntry = require("./FileEntry.js");
 var LinkEntry = BaseIterator.LinkEntry;
 var SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
 function nextEntry(next, iterator, callback) {
