@@ -1,4 +1,4 @@
-var BaseIterator = require('extract-base-iterator');
+const BaseIterator = require('extract-base-iterator').default;
 
 module.exports = require('./TarIterator');
 module.exports.DirectoryEntry = BaseIterator.DirectoryEntry;
