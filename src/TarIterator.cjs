@@ -5,9 +5,9 @@ const eos = require('end-of-stream');
 const Queue = require('queue-cb');
 const BaseIterator = require('extract-base-iterator').default;
 
-const nextEntry = require('./nextEntry');
-const fifoRemove = require('./lib/fifoRemove');
-const Lock = require('./lib/Lock');
+const nextEntry = require('./nextEntry.cjs');
+const fifoRemove = require('./lib/fifoRemove.cjs');
+const Lock = require('./lib/Lock.cjs');
 
 function TarIterator(source, options) {
   if (!(this instanceof TarIterator)) return new TarIterator(source, options);
