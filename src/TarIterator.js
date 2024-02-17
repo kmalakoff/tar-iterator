@@ -1,33 +1,31 @@
-var inherits = require('inherits');
-var fs = require('fs');
-var tarStream = require('tar-stream-compat');
-var eos = require('end-of-stream');
-var Queue = require('queue-cb');
-var BaseIterator = require('extract-base-iterator');
+const inherits = require('inherits');
+const fs = require('fs');
+const tarStream = require('tar-stream-compat');
+const eos = require('end-of-stream');
+const Queue = require('queue-cb');
+const BaseIterator = require('extract-base-iterator').default;
 
-var nextEntry = require('./nextEntry');
-var fifoRemove = require('./lib/fifoRemove');
-var Lock = require('./lib/Lock');
+const nextEntry = require('./nextEntry');
+const fifoRemove = require('./lib/fifoRemove');
+const Lock = require('./lib/Lock');
 
 function TarIterator(source, options) {
   if (!(this instanceof TarIterator)) return new TarIterator(source, options);
   BaseIterator.call(this, options);
-
-  var self = this;
   this.lock = new Lock();
   this.lock.iterator = this;
 
-  var queue = Queue(1);
-  var cancelled = false;
+  const queue = Queue(1);
+  let cancelled = false;
   function setup() {
     cancelled = true;
   }
   this.processing.push(setup);
-  self.extract = tarStream.extract();
+  this.extract = tarStream.extract();
 
   if (typeof source === 'string') source = fs.createReadStream(source);
-  queue.defer(function (callback) {
-    var data = null;
+  queue.defer((callback) => {
+    let data = null;
     function cleanup() {
       source.removeListener('error', onError);
       source.removeListener('data', onData);
@@ -44,7 +42,7 @@ function TarIterator(source, options) {
     }
     source.on('error', onError);
     source.on('data', onData);
-    eos(source.pipe(self.extract), function (err) {
+    eos(source.pipe(this.extract), (err) => {
       if (data) return;
       cleanup();
       callback(err);
@@ -52,10 +50,10 @@ function TarIterator(source, options) {
   });
 
   // start processing
-  queue.await(function (err) {
-    fifoRemove(self.processing, setup);
-    if (self.done || cancelled) return; // done
-    err ? self.end(err) : self.push(nextEntry.bind(null, null));
+  queue.await((err) => {
+    fifoRemove(this.processing, setup);
+    if (this.done || cancelled) return; // done
+    err ? this.end(err) : this.push(nextEntry.bind(null, null));
   });
 }
 
