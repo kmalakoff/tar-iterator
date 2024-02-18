@@ -1,15 +1,11 @@
-const once = require('once');
-const path = require('path');
-const compact = require('lodash.compact');
-const assign = require('just-extend');
+import path from 'path';
+import compact from 'lodash.compact';
+import once from 'once';
 
-const BaseIterator = require('extract-base-iterator').default;
-const DirectoryEntry = BaseIterator.DirectoryEntry;
-const FileEntry = require('./FileEntry.cjs');
-const LinkEntry = BaseIterator.LinkEntry;
-const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
+import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import FileEntry from './FileEntry.mjs';
 
-function nextEntry(next, iterator, callback) {
+export default function nextEntry(next, iterator, callback) {
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
@@ -31,7 +27,7 @@ function nextEntry(next, iterator, callback) {
   const onEntry = function onEntry(header, stream, next) {
     if (iterator.done) return callback(null, null, next);
 
-    const attributes = assign({}, header);
+    const attributes = { ...header };
     attributes.path = compact(header.name.split(path.sep)).join(path.sep);
     attributes.mtime = new Date(attributes.mtime);
 
@@ -60,5 +56,3 @@ function nextEntry(next, iterator, callback) {
   extract.on('finish', onEnd);
   if (next) next();
 }
-
-module.exports = nextEntry;
