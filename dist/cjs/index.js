@@ -2,27 +2,36 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-Object.defineProperty(exports, "default", {
-    enumerable: true,
-    get: function() {
+function _export(target, all) {
+    for(var name in all)Object.defineProperty(target, name, {
+        enumerable: true,
+        get: all[name]
+    });
+}
+_export(exports, {
+    DirectoryEntry: function() {
+        return _extractbaseiterator.DirectoryEntry;
+    },
+    FileEntry: function() {
+        return _FileEntry.default;
+    },
+    LinkEntry: function() {
+        return _extractbaseiterator.LinkEntry;
+    },
+    SymbolicLinkEntry: function() {
+        return _extractbaseiterator.SymbolicLinkEntry;
+    },
+    default: function() {
         return _default;
     }
 });
-var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
-var _TarIteratorcjs = /*#__PURE__*/ _interop_require_default(require("./TarIterator.js"));
+var _TarIterator = /*#__PURE__*/ _interop_require_default(require("./TarIterator.js"));
+var _FileEntry = /*#__PURE__*/ _interop_require_default(require("./FileEntry.js"));
+var _extractbaseiterator = require("extract-base-iterator");
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
     };
 }
-_TarIteratorcjs.default.DirectoryEntry = _extractbaseiterator.default.DirectoryEntry;
-_TarIteratorcjs.default.FileEntry = require("./FileEntry.js");
-_TarIteratorcjs.default.LinkEntry = _extractbaseiterator.default.LinkEntry;
-_TarIteratorcjs.default.SymbolicLinkEntry = _extractbaseiterator.default.SymbolicLinkEntry;
-var _default = _TarIteratorcjs.default;
-
-if ((typeof exports.default === 'function' || (typeof exports.default === 'object' && exports.default !== null)) && typeof exports.default.__esModule === 'undefined') {
-  Object.defineProperty(exports.default, '__esModule', { value: true });
-  for (var key in exports) exports.default[key] = exports[key];
-  module.exports = exports.default;
-}
+var _default = _TarIterator.default;
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { module.exports = exports.default; for (var key in exports) module.exports[key] = exports[key]; }

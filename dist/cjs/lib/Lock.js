@@ -1,20 +1,29 @@
 "use strict";
-var LC = require("lifecycle");
-var BaseIterator = require("extract-base-iterator").default;
-module.exports = LC.RefCountable.extend({
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "default", {
+    enumerable: true,
+    get: function() {
+        return _default;
+    }
+});
+var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
+var _lifecycle = /*#__PURE__*/ _interop_require_default(require("lifecycle"));
+function _interop_require_default(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
+var _default = _lifecycle.default.RefCountable.extend({
     constructor: function constructor() {
-        LC.RefCountable.prototype.constructor.call(this);
+        _lifecycle.default.RefCountable.prototype.constructor.call(this);
     },
     __destroy: function __destroy() {
         if (this.iterator) {
-            BaseIterator.prototype.end.call(this.iterator, this.err || null);
+            _extractbaseiterator.default.prototype.end.call(this.iterator, this.err || null);
             this.iterator = null;
         }
     }
 });
-
-if ((typeof exports.default === 'function' || (typeof exports.default === 'object' && exports.default !== null)) && typeof exports.default.__esModule === 'undefined') {
-  Object.defineProperty(exports.default, '__esModule', { value: true });
-  for (var key in exports) exports.default[key] = exports[key];
-  module.exports = exports.default;
-}
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { module.exports = exports.default; for (var key in exports) module.exports[key] = exports[key]; }

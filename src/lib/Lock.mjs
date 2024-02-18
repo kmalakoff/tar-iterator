@@ -1,7 +1,7 @@
-const LC = require('lifecycle');
-const BaseIterator = require('extract-base-iterator').default;
+import BaseIterator from 'extract-base-iterator';
+import LC from 'lifecycle';
 
-module.exports = LC.RefCountable.extend({
+export default LC.RefCountable.extend({
   constructor: function () {
     LC.RefCountable.prototype.constructor.call(this);
   },

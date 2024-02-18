@@ -1,4 +1,4 @@
-require('../lib/patch');
+require('../lib/polyfills.cjs');
 const assert = require('assert');
 const rimraf = require('rimraf');
 const mkpath = require('mkpath');
@@ -10,9 +10,9 @@ const bz2 = require('unbzip2-stream');
 const zlib = require('zlib');
 
 const TarIterator = require('tar-iterator');
-const validateFiles = require('../lib/validateFiles');
+const validateFiles = require('../lib/validateFiles.cjs');
 
-const constants = require('../lib/constants');
+const constants = require('../lib/constants.cjs');
 const TMP_DIR = constants.TMP_DIR;
 const TARGET = constants.TARGET;
 const DATA_DIR = constants.DATA_DIR;
@@ -44,33 +44,7 @@ function extract(iterator, dest, options, callback) {
   );
 }
 
-function extractPromise(iterator, dest, options, callback) {
-  const links = [];
-  iterator
-    .forEach(
-      (entry) => {
-        if (entry.type === 'link') links.unshift(entry);
-        else if (entry.type === 'symlink') links.push(entry);
-        else return entry.create(dest, options);
-      },
-      { concurrency: options.concurrency }
-    )
-    .then(() => {
-      // create links after directories and files
-      const queue = new Queue(1);
-      for (let index = 0; index < links.length; index++) {
-        ((entry) => {
-          queue.defer((callback) => {
-            entry.create(dest, options).then(callback).catch(callback);
-          });
-        })(links[index]);
-      }
-      queue.await(callback);
-    })
-    .catch(callback);
-}
-
-describe('iterator', () => {
+describe('callback', () => {
   beforeEach((callback) => {
     rimraf(TMP_DIR, (err) => {
       if (err && err.code !== 'EEXIST') return callback(err);
@@ -114,20 +88,6 @@ describe('iterator', () => {
     it('extract - no strip - concurrency Infinity', (done) => {
       const options = { now: new Date(), concurrency: Infinity };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
-        assert.ok(!err);
-
-        validateFiles(options, 'tar', (err) => {
-          assert.ok(!err);
-          done();
-        });
-      });
-    });
-
-    it('extract - no strip - promise', (done) => {
-      if (typeof Promise === 'undefined') return done();
-
-      const options = { now: new Date() };
-      extractPromise(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
         assert.ok(!err);
 
         validateFiles(options, 'tar', (err) => {

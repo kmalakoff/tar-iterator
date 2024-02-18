@@ -1,6 +1,4 @@
-export = FileEntry;
-declare function FileEntry(attributes: any, stream: any, lock: any): void;
-declare class FileEntry {
+export default class TarFileEntry {
     constructor(attributes: any, stream: any, lock: any);
     stream: any;
     lock: any;
