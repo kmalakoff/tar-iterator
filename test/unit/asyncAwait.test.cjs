@@ -3,7 +3,6 @@ const assert = require('assert');
 const rimraf = require('rimraf');
 const mkpath = require('mkpath');
 const path = require('path');
-const assign = require('just-extend');
 
 const TarIterator = require('tar-iterator');
 const validateFiles = require('../lib/validateFiles.cjs');
@@ -106,7 +105,7 @@ describe('asyncAwait', () => {
         } catch (err) {
           assert.ok(err);
         }
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, assign({ force: true }, options));
+        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, Object.assign({ force: true }, options));
         await validateFiles(options, 'tar');
       } catch (err) {
         assert.ok(!err);
