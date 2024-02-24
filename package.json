@@ -76,12 +76,12 @@
   "devDependencies": {
     "@biomejs/biome": "^1.5.3",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.19",
+    "@types/node": "^20.11.20",
     "cr": "^0.1.0",
     "depcheck": "^1.4.7",
     "fs-iterator": "^5.0.1",
     "fs-stats-spys": "^1.0.2",
-    "ts-dev-stack": "^0.14.9",
+    "ts-dev-stack": "^0.15.8",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {
