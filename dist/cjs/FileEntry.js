@@ -18,6 +18,10 @@ function _assert_this_initialized(self) {
     }
     return self;
 }
+function _call_super(_this, derived, args) {
+    derived = _get_prototype_of(derived);
+    return _possible_constructor_return(_this, _is_native_reflect_construct() ? Reflect.construct(derived, args || [], _get_prototype_of(_this).constructor) : derived.apply(_this, args));
+}
 function _class_call_check(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
         throw new TypeError("Cannot call a class as a function");
@@ -79,37 +83,22 @@ function _type_of(obj) {
     return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
 }
 function _is_native_reflect_construct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
     try {
-        Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-function _create_super(Derived) {
-    var hasNativeReflectConstruct = _is_native_reflect_construct();
-    return function _createSuperInternal() {
-        var Super = _get_prototype_of(Derived), result;
-        if (hasNativeReflectConstruct) {
-            var NewTarget = _get_prototype_of(this).constructor;
-            result = Reflect.construct(Super, arguments, NewTarget);
-        } else {
-            result = Super.apply(this, arguments);
-        }
-        return _possible_constructor_return(this, result);
-    };
+        var result = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
+    } catch (_) {}
+    return (_is_native_reflect_construct = function() {
+        return !!result;
+    })();
 }
 var TarFileEntry = /*#__PURE__*/ function(FileEntry) {
     "use strict";
     _inherits(TarFileEntry, FileEntry);
-    var _super = _create_super(TarFileEntry);
     function TarFileEntry(attributes, stream, lock) {
         _class_call_check(this, TarFileEntry);
         var _this;
-        _this = _super.call(this, attributes);
+        _this = _call_super(this, TarFileEntry, [
+            attributes
+        ]);
         _this.stream = stream;
         _this.lock = lock;
         _this.lock.retain();
@@ -119,12 +108,12 @@ var TarFileEntry = /*#__PURE__*/ function(FileEntry) {
         {
             key: "create",
             value: function create(dest, options, callback) {
-                if (typeof options === "function") {
+                if (typeof options === 'function') {
                     callback = options;
                     options = null;
                 }
                 var self = this;
-                if (typeof callback === "function") {
+                if (typeof callback === 'function') {
                     options = options || {};
                     return _extractbaseiterator.FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
                         callback(err);
@@ -144,7 +133,7 @@ var TarFileEntry = /*#__PURE__*/ function(FileEntry) {
         {
             key: "_writeFile",
             value: function _writeFile(fullPath, _options, callback) {
-                if (!this.stream) return callback(new Error("Zip FileEntry missing stream. Check for calling create multiple times"));
+                if (!this.stream) return callback(new Error('Zip FileEntry missing stream. Check for calling create multiple times'));
                 var stream = this.stream;
                 this.stream = null;
                 try {

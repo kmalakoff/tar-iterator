@@ -22,6 +22,10 @@ function _assert_this_initialized(self) {
     }
     return self;
 }
+function _call_super(_this, derived, args) {
+    derived = _get_prototype_of(derived);
+    return _possible_constructor_return(_this, _is_native_reflect_construct() ? Reflect.construct(derived, args || [], _get_prototype_of(_this).constructor) : derived.apply(_this, args));
+}
 function _class_call_check(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
         throw new TypeError("Cannot call a class as a function");
@@ -83,50 +87,35 @@ function _type_of(obj) {
     return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
 }
 function _is_native_reflect_construct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
     try {
-        Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-function _create_super(Derived) {
-    var hasNativeReflectConstruct = _is_native_reflect_construct();
-    return function _createSuperInternal() {
-        var Super = _get_prototype_of(Derived), result;
-        if (hasNativeReflectConstruct) {
-            var NewTarget = _get_prototype_of(this).constructor;
-            result = Reflect.construct(Super, arguments, NewTarget);
-        } else {
-            result = Super.apply(this, arguments);
-        }
-        return _possible_constructor_return(this, result);
-    };
+        var result = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
+    } catch (_) {}
+    return (_is_native_reflect_construct = function() {
+        return !!result;
+    })();
 }
 var TarIterator = /*#__PURE__*/ function(BaseIterator) {
     "use strict";
     _inherits(TarIterator, BaseIterator);
-    var _super = _create_super(TarIterator);
     function TarIterator(source, options) {
         _class_call_check(this, TarIterator);
         var _this;
         var setup = function setup() {
             cancelled = true;
         };
-        _this = _super.call(this, options);
+        _this = _call_super(this, TarIterator, [
+            options
+        ]);
         _this.lock = new _Lock.default();
-        _this.lock.iterator = _assert_this_initialized(_this);
+        _this.lock.iterator = _this;
         var queue = (0, _queuecb.default)(1);
         var cancelled = false;
         _this.processing.push(setup);
         _this.extract = _tarstreamcompat.default.extract();
         queue.defer(function(callback) {
             var cleanup = function cleanup() {
-                source.removeListener("error", onError);
-                source.removeListener("data", onData);
+                source.removeListener('error', onError);
+                source.removeListener('data', onData);
             };
             var onError = function onError(err) {
                 data = err;
@@ -139,13 +128,13 @@ var TarIterator = /*#__PURE__*/ function(BaseIterator) {
                 callback();
             };
             try {
-                if (typeof source === "string") source = _fs.default.createReadStream(source);
+                if (typeof source === 'string') source = _fs.default.createReadStream(source);
             } catch (err) {
                 callback(err);
             }
             var data = null;
-            source.on("error", onError);
-            source.on("data", onData);
+            source.on('error', onError);
+            source.on('data', onData);
             (0, _endofstream.default)(source.pipe(_this.extract), function(err) {
                 if (data) return;
                 cleanup();
