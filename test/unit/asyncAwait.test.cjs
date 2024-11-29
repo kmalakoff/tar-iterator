@@ -1,6 +1,6 @@
 require('../lib/polyfills.cjs');
 const assert = require('assert');
-const rimraf = require('rimraf');
+const rimraf2 = require('rimraf2');
 const mkpath = require('mkpath');
 const path = require('path');
 
@@ -47,7 +47,7 @@ describe('asyncAwait', () => {
   if (typeof Symbol === 'undefined' || !Symbol.asyncIterator) return;
 
   beforeEach((callback) => {
-    rimraf(TMP_DIR, (err) => {
+    rimraf2(TMP_DIR, { disableGlob: true }, (err) => {
       if (err && err.code !== 'EEXIST') return callback(err);
       mkpath(TMP_DIR, callback);
     });

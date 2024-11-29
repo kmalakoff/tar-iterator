@@ -1,6 +1,6 @@
 var path = require('path');
 var fs = require('fs');
-var rimraf = require('rimraf');
+var rimraf2 = require('rimraf2');
 var BenchmarkSuite = require('benchmark-suite');
 
 var constants = require('../../test/lib/constants');
@@ -38,7 +38,7 @@ module.exports = async function run({ TarIterator, version }) {
 
   console.log('----------' + suite.name + '----------');
   try {
-    rimraf.sync(TMP_DIR);
+    rimraf2.sync(TMP_DIR, { disableGlob: true });
     fs.mkdirSync(TMP_DIR);
   } catch (err) {}
   await suite.run({ time: 1000 });

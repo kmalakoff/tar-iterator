@@ -48,12 +48,12 @@ function _object_spread(target) {
 }
 function nextEntry(next, iterator, callback) {
     var extract = iterator.extract;
-    if (!extract) return callback(new Error("Extract missing"));
+    if (!extract) return callback(new Error('Extract missing'));
     var _callback = callback;
     callback = (0, _once.default)(function callback(err, entry, next) {
-        extract.removeListener("entry", onEntry);
-        extract.removeListener("error", onError);
-        extract.removeListener("finish", onEnd);
+        extract.removeListener('entry', onEntry);
+        extract.removeListener('error', onError);
+        extract.removeListener('finish', onEnd);
         // keep processing
         if (entry) iterator.stack.push(nextEntry.bind(null, next));
         // use null to indicate iteration is complete
@@ -67,26 +67,26 @@ function nextEntry(next, iterator, callback) {
         attributes.path = (0, _lodashcompact.default)(header.name.split(_path.default.sep)).join(_path.default.sep);
         attributes.mtime = new Date(attributes.mtime);
         switch(attributes.type){
-            case "directory":
+            case 'directory':
                 stream.resume(); // drain stream
                 return callback(null, new _extractbaseiterator.DirectoryEntry(attributes), next);
-            case "symlink":
+            case 'symlink':
                 stream.resume(); // drain stream
                 attributes.linkpath = header.linkname;
                 return callback(null, new _extractbaseiterator.SymbolicLinkEntry(attributes), next);
-            case "link":
+            case 'link':
                 stream.resume(); // drain stream
                 attributes.linkpath = header.linkname;
                 return callback(null, new _extractbaseiterator.LinkEntry(attributes), next);
-            case "file":
+            case 'file':
                 return callback(null, new _FileEntry.default(attributes, stream, iterator.lock), next);
         }
         stream.resume(); // drain stream
         return callback(new Error("Unrecognized entry type: ".concat(attributes.type)), null, next);
     };
-    extract.on("entry", onEntry);
-    extract.on("error", onError);
-    extract.on("finish", onEnd);
+    extract.on('entry', onEntry);
+    extract.on('error', onError);
+    extract.on('finish', onEnd);
     if (next) next();
 }
 /* CJS INTEROP */ if (exports.__esModule && exports.default) { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) exports.default[key] = exports[key]; module.exports = exports.default; }
