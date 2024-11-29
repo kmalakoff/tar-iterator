@@ -63,25 +63,25 @@
   },
   "dependencies": {
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.1.1",
+    "extract-base-iterator": "^1.1.2",
     "fs-access-compat": "^1.0.3",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkpath": "^1.0.0",
     "once": "^1.4.0",
     "queue-cb": "^1.2.1",
-    "rimraf": "^2.7.1",
+    "rimraf2": "^2.7.1",
     "tar-stream-compat": "2.1.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.9.2",
+    "@types/node": "^22.10.1",
     "cr": "^0.1.0",
     "depcheck": "^1.4.7",
     "fs-iterator": "^5.1.0",
     "fs-stats-spys": "^1.0.2",
-    "ts-dev-stack": "^0.15.8",
+    "ts-dev-stack": "^0.16.2",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {
