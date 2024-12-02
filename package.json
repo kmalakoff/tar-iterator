@@ -70,7 +70,7 @@
     "mkpath": "^1.0.0",
     "once": "^1.4.0",
     "queue-cb": "^1.2.1",
-    "rimraf2": "^2.8.1",
+    "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
   "devDependencies": {
@@ -81,7 +81,7 @@
     "depcheck": "^1.4.7",
     "fs-iterator": "^5.1.1",
     "fs-stats-spys": "^1.0.2",
-    "ts-dev-stack": "^0.17.0",
+    "ts-dev-stack": "^1.0.1",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {
