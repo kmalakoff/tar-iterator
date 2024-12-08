@@ -31,20 +31,6 @@ function _class_call_check(instance, Constructor) {
         throw new TypeError("Cannot call a class as a function");
     }
 }
-function _defineProperties(target, props) {
-    for(var i = 0; i < props.length; i++){
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-    }
-}
-function _create_class(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    return Constructor;
-}
 function _get_prototype_of(o) {
     _get_prototype_of = Object.setPrototypeOf ? Object.getPrototypeOf : function getPrototypeOf(o) {
         return o.__proto__ || Object.getPrototypeOf(o);
@@ -149,21 +135,17 @@ var TarIterator = /*#__PURE__*/ function(BaseIterator) {
         });
         return _this;
     }
-    _create_class(TarIterator, [
-        {
-            key: "end",
-            value: function end(err) {
-                if (this.lock) {
-                    this.lock.err = err;
-                    this.lock.release();
-                    this.lock = null;
-                } else {
-                    _extractbaseiterator.default.prototype.end.call(this, err); // call in lock release so end is properly handled
-                }
-                this.extract = null;
-            }
+    var _proto = TarIterator.prototype;
+    _proto.end = function end(err) {
+        if (this.lock) {
+            this.lock.err = err;
+            this.lock.release();
+            this.lock = null;
+        } else {
+            _extractbaseiterator.default.prototype.end.call(this, err); // call in lock release so end is properly handled
         }
-    ]);
+        this.extract = null;
+    };
     return TarIterator;
 }(_extractbaseiterator.default);
-/* CJS INTEROP */ if (exports.__esModule && exports.default) { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) exports.default[key] = exports[key]; module.exports = exports.default; }
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { try { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) { exports.default[key] = exports[key]; } } catch (_) {}; module.exports = exports.default; }
