@@ -27,20 +27,6 @@ function _class_call_check(instance, Constructor) {
         throw new TypeError("Cannot call a class as a function");
     }
 }
-function _defineProperties(target, props) {
-    for(var i = 0; i < props.length; i++){
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-    }
-}
-function _create_class(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    return Constructor;
-}
 function _get_prototype_of(o) {
     _get_prototype_of = Object.setPrototypeOf ? Object.getPrototypeOf : function getPrototypeOf(o) {
         return o.__proto__ || Object.getPrototypeOf(o);
@@ -104,63 +90,53 @@ var TarFileEntry = /*#__PURE__*/ function(FileEntry) {
         _this.lock.retain();
         return _this;
     }
-    _create_class(TarFileEntry, [
-        {
-            key: "create",
-            value: function create(dest, options, callback) {
-                if (typeof options === 'function') {
-                    callback = options;
-                    options = null;
-                }
-                var self = this;
-                if (typeof callback === 'function') {
-                    options = options || {};
-                    return _extractbaseiterator.FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
-                        callback(err);
-                        if (self.lock) {
-                            self.lock.release();
-                            self.lock = null;
-                        }
-                    });
-                }
-                return new Promise(function createPromise(resolve, reject) {
-                    self.create(dest, options, function createCallback(err, done) {
-                        err ? reject(err) : resolve(done);
-                    });
-                });
-            }
-        },
-        {
-            key: "_writeFile",
-            value: function _writeFile(fullPath, _options, callback) {
-                if (!this.stream) return callback(new Error('Zip FileEntry missing stream. Check for calling create multiple times'));
-                var stream = this.stream;
-                this.stream = null;
-                try {
-                    var res = stream.pipe(_fs.default.createWriteStream(fullPath));
-                    (0, _endofstream.default)(res, function(err) {
-                        err ? callback(err) : (0, _waitForAccess.default)(fullPath, callback); // gunzip stream returns prematurely occassionally
-                    });
-                } catch (err) {
-                    callback(err);
-                }
-            }
-        },
-        {
-            key: "destroy",
-            value: function destroy() {
-                _extractbaseiterator.FileEntry.prototype.destroy.call(this);
-                if (this.stream) {
-                    this.stream.resume(); // drain stream
-                    this.stream = null;
-                }
-                if (this.lock) {
-                    this.lock.release();
-                    this.lock = null;
-                }
-            }
+    var _proto = TarFileEntry.prototype;
+    _proto.create = function create(dest, options, callback) {
+        if (typeof options === 'function') {
+            callback = options;
+            options = null;
         }
-    ]);
+        var self = this;
+        if (typeof callback === 'function') {
+            options = options || {};
+            return _extractbaseiterator.FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
+                callback(err);
+                if (self.lock) {
+                    self.lock.release();
+                    self.lock = null;
+                }
+            });
+        }
+        return new Promise(function createPromise(resolve, reject) {
+            self.create(dest, options, function createCallback(err, done) {
+                err ? reject(err) : resolve(done);
+            });
+        });
+    };
+    _proto._writeFile = function _writeFile(fullPath, _options, callback) {
+        if (!this.stream) return callback(new Error('Zip FileEntry missing stream. Check for calling create multiple times'));
+        var stream = this.stream;
+        this.stream = null;
+        try {
+            var res = stream.pipe(_fs.default.createWriteStream(fullPath));
+            (0, _endofstream.default)(res, function(err) {
+                err ? callback(err) : (0, _waitForAccess.default)(fullPath, callback); // gunzip stream returns prematurely occassionally
+            });
+        } catch (err) {
+            callback(err);
+        }
+    };
+    _proto.destroy = function destroy() {
+        _extractbaseiterator.FileEntry.prototype.destroy.call(this);
+        if (this.stream) {
+            this.stream.resume(); // drain stream
+            this.stream = null;
+        }
+        if (this.lock) {
+            this.lock.release();
+            this.lock = null;
+        }
+    };
     return TarFileEntry;
 }(_extractbaseiterator.FileEntry);
-/* CJS INTEROP */ if (exports.__esModule && exports.default) { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) exports.default[key] = exports[key]; module.exports = exports.default; }
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { try { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) { exports.default[key] = exports[key]; } } catch (_) {}; module.exports = exports.default; }
