@@ -9,8 +9,8 @@ Object.defineProperty(exports, "default", {
     }
 });
 var _path = /*#__PURE__*/ _interop_require_default(require("path"));
+var _calloncefn = /*#__PURE__*/ _interop_require_default(require("call-once-fn"));
 var _lodashcompact = /*#__PURE__*/ _interop_require_default(require("lodash.compact"));
-var _once = /*#__PURE__*/ _interop_require_default(require("once"));
 var _extractbaseiterator = require("extract-base-iterator");
 var _FileEntry = /*#__PURE__*/ _interop_require_default(require("./FileEntry.js"));
 function _define_property(obj, key, value) {
@@ -50,7 +50,7 @@ function nextEntry(next, iterator, callback) {
     var extract = iterator.extract;
     if (!extract) return callback(new Error('Extract missing'));
     var _callback = callback;
-    callback = (0, _once.default)(function callback(err, entry, next) {
+    callback = (0, _calloncefn.default)(function callback(err, entry, next) {
         extract.removeListener('entry', onEntry);
         extract.removeListener('error', onError);
         extract.removeListener('finish', onEnd);
@@ -89,4 +89,4 @@ function nextEntry(next, iterator, callback) {
     extract.on('finish', onEnd);
     if (next) next();
 }
-/* CJS INTEROP */ if (exports.__esModule && exports.default) { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) exports.default[key] = exports[key]; module.exports = exports.default; }
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { try { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) { exports.default[key] = exports[key]; } } catch (_) {}; module.exports = exports.default; }
