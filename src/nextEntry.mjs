@@ -1,6 +1,6 @@
 import path from 'path';
+import once from 'call-once-fn';
 import compact from 'lodash.compact';
-import once from 'once';
 
 import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.mjs';
