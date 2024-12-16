@@ -14,7 +14,7 @@ export default class TarIterator extends BaseIterator {
     this.lock = new Lock();
     this.lock.iterator = this;
 
-    const queue = Queue(1);
+    const queue = new Queue(1);
     let cancelled = false;
     function setup() {
       cancelled = true;

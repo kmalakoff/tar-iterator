@@ -21,7 +21,7 @@ let TarIterator = class TarIterator extends BaseIterator {
         super(options);
         this.lock = new Lock();
         this.lock.iterator = this;
-        const queue = Queue(1);
+        const queue = new Queue(1);
         let cancelled = false;
         function setup() {
             cancelled = true;
