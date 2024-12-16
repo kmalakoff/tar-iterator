@@ -64,12 +64,12 @@
   "dependencies": {
     "call-once-fn": "^1.0.1",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.1.4",
+    "extract-base-iterator": "^1.1.5",
     "fs-access-compat": "^1.0.3",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkpath": "^1.0.0",
-    "queue-cb": "^1.4.1",
+    "queue-cb": "^1.4.2",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
