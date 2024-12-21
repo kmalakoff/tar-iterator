@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["tar-stream-compat"]
+  "reject": ["@types/node","tar-stream-compat"]
 }

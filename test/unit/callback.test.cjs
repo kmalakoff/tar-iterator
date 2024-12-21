@@ -1,7 +1,7 @@
 require('../lib/polyfills.cjs');
 const assert = require('assert');
 const rimraf2 = require('rimraf2');
-const mkpath = require('mkpath');
+const mkdirp = require('mkdirp-classic');
 const path = require('path');
 const fs = require('fs');
 const Queue = require('queue-cb');
@@ -47,7 +47,7 @@ describe('callback', () => {
   beforeEach((callback) => {
     rimraf2(TMP_DIR, { disableGlob: true }, (err) => {
       if (err && err.code !== 'EEXIST') return callback(err);
-      mkpath(TMP_DIR, callback);
+      mkdirp(TMP_DIR, callback);
     });
   });
 
