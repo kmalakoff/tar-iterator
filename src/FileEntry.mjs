@@ -1,6 +1,8 @@
 import fs from 'fs';
 import eos from 'end-of-stream';
 import { FileEntry } from 'extract-base-iterator';
+// biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>
+import Promise from 'pinkie-promise';
 import waitForAccess from './lib/waitForAccess.mjs';
 
 export default class TarFileEntry extends FileEntry {
