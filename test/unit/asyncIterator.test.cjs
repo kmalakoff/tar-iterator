@@ -26,10 +26,17 @@ async function extract(iterator, dest, options) {
 
 describe('asyncIterator', () => {
   if (typeof Symbol === 'undefined' || !Symbol.asyncIterator) return;
+  let globalPromise;
+  before(() => {
+    globalPromise = global.Promise;
+    global.Promise = require('pinkie-promise');
+  });
+  after(() => {
+    global.Promise = globalPromise;
+  });
 
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, (err) => {
-      if (err && err.code !== 'EEXIST') return callback(err);
+    rimraf2(TMP_DIR, { disableGlob: true }, () => {
       mkdirp(TMP_DIR, callback);
     });
   });
@@ -66,7 +73,7 @@ describe('asyncIterator', () => {
         } catch (err) {
           assert.ok(err);
         }
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, Object.assign({ force: true }, options));
+        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options });
         await validateFiles(options, 'tar');
       } catch (err) {
         assert.ok(!err, err ? err.message : '');
