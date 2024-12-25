@@ -45,8 +45,7 @@ function extract(iterator, dest, options, callback) {
 
 describe('callback', () => {
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, (err) => {
-      if (err && err.code !== 'EEXIST') return callback(err);
+    rimraf2(TMP_DIR, { disableGlob: true }, () => {
       mkdirp(TMP_DIR, callback);
     });
   });
@@ -160,7 +159,7 @@ describe('callback', () => {
           extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
             assert.ok(err);
 
-            extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, Object.assign({ force: true }, options), (err) => {
+            extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options }, (err) => {
               assert.ok(!err, err ? err.message : '');
 
               validateFiles(options, 'tar', (err) => {
