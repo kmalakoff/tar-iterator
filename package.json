@@ -64,7 +64,7 @@
   "dependencies": {
     "call-once-fn": "^1.0.1",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.1.5",
+    "extract-base-iterator": "^1.2.0",
     "fs-access-compat": "^1.0.3",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
@@ -82,7 +82,7 @@
     "depcheck": "^1.4.7",
     "fs-iterator": "^5.1.1",
     "fs-stats-spys": "^1.1.0",
-    "ts-dev-stack": "^1.5.3",
+    "ts-dev-stack": "^1.5.4",
     "unbzip2-stream": "^1.4.3"
   },
   "packageManager": "npm@11.0.0+sha512.11dff29565d2297c74e7c594a9762581bde969f0aa5cbe6f5b3644bf008a16c065ece61094d9ffbb81125be38df8e1ba43eb8244b3d30c61eb797e9a2440e3ec",
