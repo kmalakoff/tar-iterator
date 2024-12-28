@@ -43,6 +43,19 @@ function extract(iterator, dest, options, callback) {
 }
 
 describe('promise', () => {
+  (() => {
+    // patch and restore promise
+    const root = typeof global !== 'undefined' ? global : window;
+    let rootPromise;
+    before(() => {
+      rootPromise = root.Promise;
+      root.Promise = require('pinkie-promise');
+    });
+    after(() => {
+      root.Promise = rootPromise;
+    });
+  })();
+
   beforeEach((callback) => {
     rimraf2(TMP_DIR, { disableGlob: true }, () => {
       mkdirp(TMP_DIR, callback);
