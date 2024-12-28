@@ -1,1 +1,1 @@
-ignores: ["tar-iterator", "depcheck", "ts-dev-stack", "@types/*", "@biomejs/*", "lzma-native"]
+ignores: ["tar-iterator", "depcheck", "@types/*", "@biomejs/*", "lzma-native"]
