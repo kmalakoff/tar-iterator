@@ -26,14 +26,18 @@ async function extract(iterator, dest, options) {
 
 describe('asyncIterator', () => {
   if (typeof Symbol === 'undefined' || !Symbol.asyncIterator) return;
-  let globalPromise;
-  before(() => {
-    globalPromise = global.Promise;
-    global.Promise = require('pinkie-promise');
-  });
-  after(() => {
-    global.Promise = globalPromise;
-  });
+  (() => {
+    // patch and restore promise
+    const root = typeof global !== 'undefined' ? global : window;
+    let rootPromise;
+    before(() => {
+      rootPromise = root.Promise;
+      root.Promise = require('pinkie-promise');
+    });
+    after(() => {
+      root.Promise = rootPromise;
+    });
+  })();
 
   beforeEach((callback) => {
     rimraf2(TMP_DIR, { disableGlob: true }, () => {

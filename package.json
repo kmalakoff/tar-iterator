@@ -1,6 +1,6 @@
 {
   "name": "tar-iterator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Extract contents from tar archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",
@@ -64,12 +64,11 @@
   "dependencies": {
     "call-once-fn": "^1.0.1",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.2.0",
+    "extract-base-iterator": "^1.2.1",
     "fs-access-compat": "^1.0.3",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "pinkie-promise": "^2.0.1",
     "queue-cb": "^1.4.4",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
@@ -80,12 +79,11 @@
     "@types/node": "^22.10.2",
     "cr": "^0.1.0",
     "depcheck": "^1.4.7",
-    "fs-iterator": "^5.1.1",
+    "fs-iterator": "^5.2.0",
     "fs-stats-spys": "^1.1.0",
-    "ts-dev-stack": "^1.5.4",
+    "pinkie-promise": "^2.0.1",
     "unbzip2-stream": "^1.4.3"
   },
-  "packageManager": "npm@11.0.0+sha512.11dff29565d2297c74e7c594a9762581bde969f0aa5cbe6f5b3644bf008a16c065ece61094d9ffbb81125be38df8e1ba43eb8244b3d30c61eb797e9a2440e3ec",
   "engines": {
     "node": ">=0.8"
   },
