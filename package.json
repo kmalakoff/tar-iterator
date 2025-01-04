@@ -63,14 +63,14 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.0.4",
+    "call-once-fn": "^1.0.5",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.2.6",
+    "extract-base-iterator": "^1.2.7",
     "fs-access-compat": "^1.1.4",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "queue-cb": "^1.4.8",
+    "queue-cb": "^1.4.9",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
