@@ -16,24 +16,18 @@ export default class TarFileEntry extends FileEntry {
       callback = options;
       options = null;
     }
-
-    const self = this;
     if (typeof callback === 'function') {
       options = options || {};
-      return FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
+      return FileEntry.prototype.create.call(this, dest, options, (err) => {
         callback(err);
-        if (self.lock) {
-          self.lock.release();
-          self.lock = null;
+        if (this.lock) {
+          this.lock.release();
+          this.lock = null;
         }
       });
     }
 
-    return new Promise(function createPromise(resolve, reject) {
-      self.create(dest, options, function createCallback(err, done) {
-        err ? reject(err) : resolve(done);
-      });
-    });
+    return new Promise((resolve, reject) => this.create(dest, options, (err, done) => (err ? reject(err) : resolve(done))));
   }
 
   _writeFile(fullPath, _options, callback) {
