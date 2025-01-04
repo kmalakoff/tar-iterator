@@ -65,7 +65,7 @@
   "dependencies": {
     "call-once-fn": "^1.0.5",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.2.9",
+    "extract-base-iterator": "^1.2.10",
     "fs-access-compat": "^1.1.4",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
