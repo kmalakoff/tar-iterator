@@ -60,7 +60,7 @@
   "dependencies": {
     "call-once-fn": "^1.0.7",
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^1.2.10",
+    "extract-base-iterator": "^1.2.11",
     "fs-access-compat": "^1.1.6",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
@@ -74,8 +74,8 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.5",
     "cr": "^0.1.0",
-    "fs-iterator": "^5.2.10",
-    "fs-stats-spys": "^1.1.7",
+    "fs-iterator": "^5.2.11",
+    "fs-stats-spys": "^1.1.8",
     "pinkie-promise": "^2.0.1",
     "unbzip2-stream": "^1.4.3"
   },
