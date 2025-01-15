@@ -64,7 +64,7 @@ describe('callback', () => {
           entry.destroy();
         },
         (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           assert.ok(!iterator.extract);
           done();
         }
@@ -74,10 +74,10 @@ describe('callback', () => {
     it('extract - no strip - concurrency 1', (done) => {
       const options = { now: new Date(), concurrency: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -86,10 +86,10 @@ describe('callback', () => {
     it('extract - no strip - concurrency Infinity', (done) => {
       const options = { now: new Date(), concurrency: Infinity };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -99,10 +99,10 @@ describe('callback', () => {
       const options = { now: new Date() };
       const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar'));
       extract(new TarIterator(source), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -113,10 +113,10 @@ describe('callback', () => {
       let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.bz2'));
       source = source.pipe(bz2());
       extract(new TarIterator(source), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -127,10 +127,10 @@ describe('callback', () => {
       let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.gz'));
       source = source.pipe(zlib.createUnzip());
       extract(new TarIterator(source), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -139,10 +139,10 @@ describe('callback', () => {
     it('extract - strip 1', (done) => {
       const options = { now: new Date(), strip: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
           done();
         });
       });
@@ -151,19 +151,19 @@ describe('callback', () => {
     it('extract multiple times', (done) => {
       const options = { now: new Date(), strip: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
-        if (err) return done(err);
+        if (err) return done(err.message);
 
         validateFiles(options, 'tar', (err) => {
-          if (err) return done(err);
+          if (err) return done(err.message);
 
           extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
             assert.ok(err);
 
             extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options }, (err) => {
-              if (err) return done(err);
+              if (err) return done(err.message);
 
               validateFiles(options, 'tar', (err) => {
-                if (err) return done(err);
+                if (err) return done(err.message);
                 done();
               });
             });

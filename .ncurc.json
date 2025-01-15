@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["@types/*", "biomejs/*", "assert", "tar-stream-compat"]
+  "reject": ["tar-stream-compat"]
 }
