@@ -58,25 +58,24 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.0.8",
+    "call-once-fn": "^1.0.9",
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^1.2.14",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "queue-cb": "^1.4.12",
+    "queue-cb": "^1.4.13",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^22.10.5",
-    "cr": "^0.1.0",
-    "fs-iterator": "^5.2.12",
-    "fs-stats-spys": "^1.1.9",
-    "pinkie-promise": "^2.0.1",
-    "unbzip2-stream": "^1.4.3"
+    "@types/mocha": "*",
+    "@types/node": "*",
+    "cr": "*",
+    "fs-iterator": "*",
+    "fs-stats-spys": "*",
+    "pinkie-promise": "*",
+    "unbzip2-stream": "*"
   },
   "engines": {
     "node": ">=0.8"
