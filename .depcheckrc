@@ -1,1 +1,1 @@
-ignores: ["@types/*", "tar-iterator", "@biomejs/*", "lzma-native"]
+ignores: ["tar-iterator", "lzma-native"]
