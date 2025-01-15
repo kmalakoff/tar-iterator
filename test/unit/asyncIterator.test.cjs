@@ -52,7 +52,7 @@ describe('asyncIterator', () => {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
       } catch (err) {
-        if (err) return done(err);
+        if (err) return done(err.message);
       }
     });
 
@@ -62,7 +62,7 @@ describe('asyncIterator', () => {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
         await validateFiles(options, 'tar');
       } catch (err) {
-        if (err) return done(err);
+        if (err) return done(err.message);
       }
     });
 
@@ -80,7 +80,7 @@ describe('asyncIterator', () => {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options });
         await validateFiles(options, 'tar');
       } catch (err) {
-        if (err) return done(err);
+        if (err) return done(err.message);
       }
     });
   });
