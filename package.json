@@ -58,7 +58,7 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.0.9",
+    "call-once-fn": "^1.0.10",
     "extract-base-iterator": "^1.2.16",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
