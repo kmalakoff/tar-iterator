@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.12",
-    "extract-base-iterator": "^1.2.16",
+    "extract-base-iterator": "^1.2.17",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
