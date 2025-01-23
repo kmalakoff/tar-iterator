@@ -59,12 +59,10 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.9",
-    "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^1.2.16",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "queue-cb": "^1.4.13",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
@@ -75,6 +73,7 @@
     "fs-iterator": "*",
     "fs-stats-spys": "*",
     "pinkie-promise": "*",
+    "queue-cb": "^1.4.13",
     "unbzip2-stream": "*"
   },
   "engines": {
