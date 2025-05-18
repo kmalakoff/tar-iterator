@@ -1,6 +1,6 @@
 {
   "name": "tar-iterator",
-  "version": "1.2.26",
+  "version": "1.2.27",
   "description": "Extract contents from tar archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",
