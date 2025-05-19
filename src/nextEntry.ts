@@ -3,7 +3,7 @@ import once from 'call-once-fn';
 import compact from 'lodash.compact';
 
 import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
-import FileEntry from './FileEntry.mjs';
+import FileEntry from './FileEntry.js';
 
 export default function nextEntry(next, iterator, callback) {
   const extract = iterator.extract;
