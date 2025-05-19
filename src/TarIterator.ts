@@ -9,7 +9,7 @@ import nextEntry from './nextEntry.js';
 
 import type { ExtractOptions, LockT } from './types.js';
 
-export default class TarIterator extends BaseIterator {
+export default class TarIterator extends BaseIterator<unknown> {
   private lock: LockT;
   private extract: NodeJS.WritableStream;
 
