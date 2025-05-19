@@ -67,60 +67,40 @@ describe('asyncAwait', () => {
   describe('happy path', () => {
     it('extract - no strip - concurrency 1', async () => {
       const options = { now: new Date(), concurrency: 1 };
-      try {
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-        await validateFiles(options, 'tar');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+      await validateFiles(options, 'tar');
     });
 
     it('extract - no strip - concurrency Infinity', async () => {
       const options = { now: new Date(), concurrency: Infinity };
-      try {
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-        await validateFiles(options, 'tar');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+      await validateFiles(options, 'tar');
     });
 
     it('extract - no strip - forEach', async () => {
       const options = { now: new Date(), concurrency: Infinity };
-      try {
-        await extractForEach(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-        await validateFiles(options, 'tar');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extractForEach(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+      await validateFiles(options, 'tar');
     });
 
     it('extract - strip 1', async () => {
       const options = { now: new Date(), strip: 1 };
-      try {
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-        await validateFiles(options, 'tar');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+      await validateFiles(options, 'tar');
     });
 
     it('extract multiple times', async () => {
       const options = { now: new Date(), strip: 1 };
+      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+      await validateFiles(options, 'tar');
       try {
         await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-        await validateFiles(options, 'tar');
-        try {
-          await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-          assert.ok(false);
-        } catch (err) {
-          assert.ok(err);
-        }
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options });
-        await validateFiles(options, 'tar');
+        assert.ok(false);
       } catch (err) {
-        if (err) return done(err.message);
+        assert.ok(err);
       }
+      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options });
+      await validateFiles(options, 'tar');
     });
   });
 

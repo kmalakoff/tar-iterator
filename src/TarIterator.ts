@@ -3,12 +3,17 @@ import once from 'call-once-fn';
 import BaseIterator from 'extract-base-iterator';
 import tarStream from 'tar-stream-compat';
 
-import Lock from './lib/Lock.mjs';
-import fifoRemove from './lib/fifoRemove.mjs';
-import nextEntry from './nextEntry.mjs';
+import Lock from './lib/Lock.js';
+import fifoRemove from './lib/fifoRemove.js';
+import nextEntry from './nextEntry.js';
+
+import type { ExtractOptions, LockT } from './types.js';
 
 export default class TarIterator extends BaseIterator {
-  constructor(source, options) {
+  private lock: LockT;
+  private extract: NodeJS.WritableStream;
+
+  constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
     this.lock = new Lock();
     this.lock.iterator = this;
@@ -18,8 +23,8 @@ export default class TarIterator extends BaseIterator {
       cancelled = true;
     };
     this.processing.push(setup);
-    this.extract = tarStream.extract();
 
+    this.extract = tarStream.extract();
     const pipe = (cb) => {
       try {
         if (typeof source === 'string') source = fs.createReadStream(source);
@@ -28,9 +33,9 @@ export default class TarIterator extends BaseIterator {
       }
 
       const end = once(cb);
-      source.on('data', () => end());
-      source.on('error', end);
-      source.pipe(this.extract);
+      (source as NodeJS.ReadableStream).on('data', () => end());
+      (source as NodeJS.ReadableStream).on('error', end);
+      (source as NodeJS.ReadableStream).pipe(this.extract);
     };
     pipe((err) => {
       fifoRemove(this.processing, setup);
@@ -39,7 +44,7 @@ export default class TarIterator extends BaseIterator {
     });
   }
 
-  end(err) {
+  end(err: Error) {
     if (this.lock) {
       this.lock.err = err;
       this.lock.release();

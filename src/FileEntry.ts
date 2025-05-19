@@ -1,9 +1,14 @@
 import fs from 'fs';
 import { FileEntry } from 'extract-base-iterator';
 import oo from 'on-one';
-import waitForAccess from './lib/waitForAccess.mjs';
+import waitForAccess from './lib/waitForAccess.js';
+
+import type { LockT } from './types.js';
 
 export default class TarFileEntry extends FileEntry {
+  private lock: LockT;
+  private stream: NodeJS.ReadableStream;
+
   constructor(attributes, stream, lock) {
     super(attributes);
     this.stream = stream;
