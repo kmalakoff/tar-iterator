@@ -44,7 +44,7 @@ export default class TarIterator extends BaseIterator {
     });
   }
 
-  end(err: Error) {
+  end(err?: Error) {
     if (this.lock) {
       this.lock.err = err;
       this.lock.release();
