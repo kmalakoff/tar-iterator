@@ -5,12 +5,15 @@ import compact from 'lodash.compact';
 import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.js';
 
-export default function nextEntry(next, iterator, callback) {
+import type { AbstractTarIterator, Entry, EntryCallback } from './types.js';
+
+export type TarNext = () => undefined;
+
+export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, callback: EntryCallback): undefined {
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
-  const _callback = callback;
-  callback = once(function callback(err, entry, next) {
+  const nextCallback = once((err?: Error, entry?: Entry, next?: TarNext) => {
     extract.removeListener('entry', onEntry);
     extract.removeListener('error', onError);
     extract.removeListener('finish', onEnd);
@@ -19,13 +22,13 @@ export default function nextEntry(next, iterator, callback) {
     if (entry) iterator.stack.push(nextEntry.bind(null, next));
 
     // use null to indicate iteration is complete
-    _callback(err, err || !entry ? null : entry);
+    callback(err, err || !entry ? null : entry);
   });
 
   const onError = callback;
   const onEnd = callback.bind(null, null);
-  const onEntry = function onEntry(header, stream, next) {
-    if (iterator.done) return callback(null, null, next);
+  const onEntry = function onEntry(header, stream, next: TarNext) {
+    if (iterator.done) return nextCallback(null, null, next);
 
     const attributes = { ...header };
     attributes.path = compact(header.name.split(path.sep)).join(path.sep);
@@ -34,21 +37,21 @@ export default function nextEntry(next, iterator, callback) {
     switch (attributes.type) {
       case 'directory':
         stream.resume(); // drain stream
-        return callback(null, new DirectoryEntry(attributes), next);
+        return nextCallback(null, new DirectoryEntry(attributes), next);
       case 'symlink':
         stream.resume(); // drain stream
         attributes.linkpath = header.linkname;
-        return callback(null, new SymbolicLinkEntry(attributes), next);
+        return nextCallback(null, new SymbolicLinkEntry(attributes), next);
       case 'link':
         stream.resume(); // drain stream
         attributes.linkpath = header.linkname;
-        return callback(null, new LinkEntry(attributes), next);
+        return nextCallback(null, new LinkEntry(attributes), next);
       case 'file':
-        return callback(null, new FileEntry(attributes, stream, iterator.lock), next);
+        return nextCallback(null, new FileEntry(attributes, stream, iterator.lock), next);
     }
 
     stream.resume(); // drain stream
-    return callback(new Error(`Unrecognized entry type: ${attributes.type}`), null, next);
+    return nextCallback(new Error(`Unrecognized entry type: ${attributes.type}`), null, next);
   };
 
   extract.on('entry', onEntry);

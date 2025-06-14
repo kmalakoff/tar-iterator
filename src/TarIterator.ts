@@ -4,13 +4,12 @@ import BaseIterator from 'extract-base-iterator';
 import tarStream from 'tar-stream-compat';
 
 import Lock from './lib/Lock.js';
-import fifoRemove from './lib/fifoRemove.js';
 import nextEntry from './nextEntry.js';
 
-import type { ExtractOptions, LockT } from './types.js';
+import type { ExtractOptions } from './types.js';
 
 export default class TarIterator extends BaseIterator<unknown> {
-  private lock: LockT;
+  private lock: Lock;
   private extract: NodeJS.WritableStream;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
@@ -38,7 +37,7 @@ export default class TarIterator extends BaseIterator<unknown> {
       (source as NodeJS.ReadableStream).pipe(this.extract);
     };
     pipe((err) => {
-      fifoRemove(this.processing, setup);
+      this.processing.removeValue(setup);
       if (this.done || cancelled) return; // done
       err ? this.end(err) : this.push(nextEntry.bind(null, null));
     });
