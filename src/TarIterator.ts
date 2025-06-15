@@ -18,7 +18,7 @@ export default class TarIterator extends BaseIterator<unknown> {
     this.lock.iterator = this;
 
     let cancelled = false;
-    const setup = () => {
+    const setup = (): undefined => {
       cancelled = true;
     };
     this.processing.push(setup);
