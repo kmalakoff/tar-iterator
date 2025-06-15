@@ -37,7 +37,7 @@ export default class TarIterator extends BaseIterator<unknown> {
       (source as NodeJS.ReadableStream).pipe(this.extract);
     };
     pipe((err) => {
-      this.processing.removeValue(setup);
+      this.processing.remove(setup);
       if (this.done || cancelled) return; // done
       err ? this.end(err) : this.push(nextEntry.bind(null, null));
     });
