@@ -15,12 +15,13 @@ const DATA_DIR = constants.DATA_DIR;
 async function extract(iterator, dest, options) {
   const links = [];
   const symlinks = [];
-  let entry = await iterator.next();
-  while (entry) {
+  let value = await iterator.next();
+  while (!value.done) {
+    const entry = value.value;
     if (entry.type === 'link') links.push(entry);
     else if (entry.type === 'symlink') symlinks.push(entry);
     else await entry.create(dest, options);
-    entry = await iterator.next();
+    value = await iterator.next();
   }
 
   // create links then symlinks after directories and files
