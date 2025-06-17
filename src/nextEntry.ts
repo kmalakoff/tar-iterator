@@ -8,6 +8,7 @@ import FileEntry from './FileEntry.js';
 import type { AbstractTarIterator, Entry, EntryCallback } from './types.js';
 
 export type TarNext = () => undefined;
+export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
 
 export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, callback: EntryCallback): undefined {
   const extract = iterator.extract;
@@ -21,9 +22,8 @@ export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, 
     // keep processing
     if (entry) iterator.stack.push(nextEntry.bind(null, next));
 
-    // use null to indicate iteration is complete
-    callback(err, err || !entry ? null : entry);
-  });
+    err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
+  }) as NextCallback;
 
   const onError = callback;
   const onEnd = callback.bind(null, null);
