@@ -9,4 +9,4 @@ export interface AbstractTarIterator extends AbstractIterator<unknown> {
   extract: NodeJS.WritableStream;
 }
 
-export type EntryCallback = (error?: Error, entry?: Entry) => undefined;
+export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => undefined;
