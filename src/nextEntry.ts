@@ -1,8 +1,7 @@
-import path from 'path';
 import once from 'call-once-fn';
-import compact from 'lodash.compact';
-
 import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import compact from 'lodash.compact';
+import path from 'path';
 import FileEntry from './FileEntry.js';
 
 import type { AbstractTarIterator, Entry, EntryCallback } from './types.js';
