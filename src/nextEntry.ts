@@ -3,13 +3,14 @@ import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-itera
 import compact from 'lodash.compact';
 import path from 'path';
 import FileEntry from './FileEntry.js';
+import type Iterator from './TarIterator.js';
 
-import type { AbstractTarIterator, Entry, EntryCallback } from './types.js';
+import type { Entry, EntryCallback } from './types.js';
 
 export type TarNext = () => undefined;
 export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
 
-export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, callback: EntryCallback): undefined {
+export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): undefined {
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
@@ -19,7 +20,7 @@ export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, 
     extract.removeListener('finish', onEnd);
 
     // keep processing
-    if (entry) iterator.stack.push(nextEntry.bind(null, next));
+    if (entry) iterator.push(nextEntry.bind(null, next));
 
     err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
   }) as NextCallback;
@@ -27,7 +28,7 @@ export default function nextEntry(next: TarNext, iterator: AbstractTarIterator, 
   const onError = callback;
   const onEnd = callback.bind(null, null);
   const onEntry = function onEntry(header, stream, next: TarNext) {
-    if (iterator.done) return nextCallback(null, null, next);
+    if (iterator.isDone()) return nextCallback(null, null, next);
 
     const attributes = { ...header };
     attributes.path = compact(header.name.split(path.sep)).join(path.sep);
