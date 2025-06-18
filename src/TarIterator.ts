@@ -1,6 +1,6 @@
-import fs from 'fs';
 import once from 'call-once-fn';
 import BaseIterator from 'extract-base-iterator';
+import fs from 'fs';
 import tarStream from 'tar-stream-compat';
 
 import Lock from './lib/Lock.js';
