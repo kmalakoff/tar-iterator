@@ -9,8 +9,8 @@ import nextEntry from './nextEntry.js';
 import type { ExtractOptions } from './types.js';
 
 export default class TarIterator extends BaseIterator<unknown> {
-  private lock: Lock;
-  private extract: NodeJS.WritableStream;
+  lock: Lock;
+  extract: NodeJS.WritableStream;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
