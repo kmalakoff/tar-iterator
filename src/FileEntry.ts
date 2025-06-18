@@ -1,5 +1,5 @@
-import fs from 'fs';
 import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
+import fs from 'fs';
 import oo from 'on-one';
 
 import type Lock from './lib/Lock.js';
