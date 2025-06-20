@@ -7,6 +7,7 @@ const fs = require('fs');
 const Queue = require('queue-cb');
 const bz2 = require('unbzip2-stream');
 const zlib = require('zlib');
+const Pinkie = require('pinkie-promise');
 
 const TarIterator = require('tar-iterator');
 const validateFiles = require('../lib/validateFiles.cjs');
@@ -45,14 +46,13 @@ function extract(iterator, dest, options, callback) {
 describe('promise', () => {
   (() => {
     // patch and restore promise
-    const root = typeof global !== 'undefined' ? global : window;
-    let rootPromise;
+    if (typeof global === 'undefined') return;
+    const globalPromise = global.Promise;
     before(() => {
-      rootPromise = root.Promise;
-      root.Promise = require('pinkie-promise');
+      global.Promise = Pinkie;
     });
     after(() => {
-      root.Promise = rootPromise;
+      global.Promise = globalPromise;
     });
   })();
 
