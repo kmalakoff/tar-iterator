@@ -3,6 +3,7 @@ const assert = require('assert');
 const rimraf2 = require('rimraf2');
 const mkdirp = require('mkdirp-classic');
 const path = require('path');
+const Pinkie = require('pinkie-promise');
 
 const TarIterator = require('tar-iterator');
 const validateFiles = require('../lib/validateFiles.cjs');
@@ -48,14 +49,13 @@ describe('asyncAwait', () => {
   if (typeof Symbol === 'undefined' || !Symbol.asyncIterator) return;
   (() => {
     // patch and restore promise
-    const root = typeof global !== 'undefined' ? global : window;
-    let rootPromise;
+    if (typeof global === 'undefined') return;
+    const globalPromise = global.Promise;
     before(() => {
-      rootPromise = root.Promise;
-      root.Promise = require('pinkie-promise');
+      global.Promise = Pinkie;
     });
     after(() => {
-      root.Promise = rootPromise;
+      global.Promise = globalPromise;
     });
   })();
 
