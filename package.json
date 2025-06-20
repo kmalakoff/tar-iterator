@@ -59,11 +59,11 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.0.19",
-    "extract-base-iterator": "^2.0.1",
+    "call-once-fn": "^1.0.20",
+    "extract-base-iterator": "^2.0.2",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "on-one": "^0.1.8",
+    "on-one": "^0.1.9",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "2.1.5"
   },
