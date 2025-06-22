@@ -1,21 +1,17 @@
-require('../lib/polyfills.cjs');
-const assert = require('assert');
-const rimraf2 = require('rimraf2');
-const mkdirp = require('mkdirp-classic');
-const path = require('path');
-const fs = require('fs');
-const Queue = require('queue-cb');
-const bz2 = require('unbzip2-stream');
-const zlib = require('zlib');
-const Pinkie = require('pinkie-promise');
-
-const TarIterator = require('tar-iterator');
-const validateFiles = require('../lib/validateFiles.cjs');
-
-const constants = require('../lib/constants.cjs');
-const TMP_DIR = constants.TMP_DIR;
-const TARGET = constants.TARGET;
-const DATA_DIR = constants.DATA_DIR;
+import '../lib/polyfills.ts';
+import assert from 'assert';
+import fs from 'fs';
+import mkdirp from 'mkdirp-classic';
+import path from 'path';
+import Pinkie from 'pinkie-promise';
+import Queue from 'queue-cb';
+import rimraf2 from 'rimraf2';
+// @ts-ignore
+import TarIterator from 'tar-iterator';
+import bz2 from 'unbzip2-stream';
+import zlib from 'zlib';
+import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import validateFiles from '../lib/validateFiles.ts';
 
 function extract(iterator, dest, options, callback) {
   const links = [];
@@ -163,9 +159,9 @@ describe('promise', () => {
 
     it('extract - stream gz', (done) => {
       const options = { now: new Date() };
-      let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.gz'));
-      source = source.pipe(zlib.createUnzip());
-      extract(new TarIterator(source), TARGET, options, (err) => {
+      const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.gz'));
+      const pipleine = source.pipe(zlib.createUnzip());
+      extract(new TarIterator(pipleine), TARGET, options, (err) => {
         if (err) {
           done(err.message);
           return;

@@ -1,17 +1,14 @@
-require('../lib/polyfills.cjs');
-const assert = require('assert');
-const rimraf2 = require('rimraf2');
-const mkdirp = require('mkdirp-classic');
-const path = require('path');
-const Pinkie = require('pinkie-promise');
+import '../lib/polyfills.ts';
+import assert from 'assert';
+import mkdirp from 'mkdirp-classic';
+import path from 'path';
+import Pinkie from 'pinkie-promise';
+import rimraf2 from 'rimraf2';
 
-const TarIterator = require('tar-iterator');
-const validateFiles = require('../lib/validateFiles.cjs');
-
-const constants = require('../lib/constants.cjs');
-const TMP_DIR = constants.TMP_DIR;
-const TARGET = constants.TARGET;
-const DATA_DIR = constants.DATA_DIR;
+// @ts-ignore
+import TarIterator from 'tar-iterator';
+import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import validateFiles from '../lib/validateFiles.ts';
 
 async function extract(iterator, dest, options) {
   const links = [];
