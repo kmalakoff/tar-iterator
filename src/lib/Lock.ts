@@ -4,7 +4,7 @@ export default class Lock {
   private count = 1;
 
   // members
-  iterator: BaseIterator<unknown> = null;
+  iterator: BaseIterator = null;
   err: Error = null;
 
   retain() {

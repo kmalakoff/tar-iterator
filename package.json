@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.20",
-    "extract-base-iterator": "^2.0.3",
+    "extract-base-iterator": "^2.0.5",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
     "on-one": "^0.1.9",
