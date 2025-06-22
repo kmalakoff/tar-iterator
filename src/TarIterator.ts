@@ -8,7 +8,7 @@ import nextEntry from './nextEntry.ts';
 
 import type { ExtractOptions } from './types.ts';
 
-export default class TarIterator extends BaseIterator<unknown> {
+export default class TarIterator extends BaseIterator {
   lock: Lock;
   extract: NodeJS.WritableStream;
 
