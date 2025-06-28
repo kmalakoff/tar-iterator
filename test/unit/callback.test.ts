@@ -56,7 +56,7 @@ describe('callback', () => {
     it('destroy entries', (done) => {
       const iterator = new TarIterator(path.join(DATA_DIR, 'fixture.tar'));
       iterator.forEach(
-        (entry) => {
+        (entry): undefined => {
           entry.destroy();
         },
         (err) => {
