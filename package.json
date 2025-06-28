@@ -65,7 +65,7 @@
     "mkdirp-classic": "^0.5.3",
     "on-one": "^0.1.9",
     "rimraf2": "^2.8.2",
-    "tar-stream-compat": "^2.3.0"
+    "tar-stream-compat": "^2.3.2"
   },
   "devDependencies": {
     "@types/mocha": "*",
