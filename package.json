@@ -59,8 +59,8 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.0.20",
-    "extract-base-iterator": "^2.0.6",
+    "call-once-fn": "^1.1.0",
+    "extract-base-iterator": "^2.2.0",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
     "on-one": "^1.0.1",
