@@ -60,10 +60,10 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.20",
-    "extract-base-iterator": "^2.0.5",
+    "extract-base-iterator": "^2.0.6",
     "lodash.compact": "^3.0.1",
     "mkdirp-classic": "^0.5.3",
-    "on-one": "^0.1.9",
+    "on-one": "^1.0.1",
     "rimraf2": "^2.8.2",
     "tar-stream-compat": "^2.3.3"
   },
