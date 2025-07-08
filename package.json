@@ -59,13 +59,13 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.1.0",
-    "extract-base-iterator": "^2.2.2",
-    "lodash.compact": "^3.0.1",
-    "mkdirp-classic": "^0.5.3",
-    "on-one": "^1.0.1",
-    "rimraf2": "^2.8.2",
-    "tar-stream-compat": "^2.3.3"
+    "call-once-fn": "*",
+    "extract-base-iterator": "*",
+    "lodash.compact": "*",
+    "mkdirp-classic": "*",
+    "on-one": "*",
+    "rimraf2": "*",
+    "tar-stream-compat": "*"
   },
   "devDependencies": {
     "@types/mocha": "*",
