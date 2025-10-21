@@ -6,7 +6,6 @@ import path from 'path';
 import Pinkie from 'pinkie-promise';
 import Queue from 'queue-cb';
 import rimraf2 from 'rimraf2';
-// @ts-ignore
 import TarIterator from 'tar-iterator';
 import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';
@@ -16,6 +15,7 @@ import validateFiles from '../lib/validateFiles.ts';
 function extract(iterator, dest, options, callback) {
   const links = [];
   iterator
+    // biome-ignore lint/suspicious/useIterableCallbackReturn: Not an iterable
     .forEach(
       (entry) => {
         if (entry.type === 'link') links.unshift(entry);
