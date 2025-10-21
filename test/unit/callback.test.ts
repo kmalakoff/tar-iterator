@@ -5,7 +5,6 @@ import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
 import rimraf2 from 'rimraf2';
-// @ts-ignore
 import TarIterator from 'tar-iterator';
 import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';

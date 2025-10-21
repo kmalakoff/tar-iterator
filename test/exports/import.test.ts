@@ -1,5 +1,4 @@
 import assert from 'assert';
-// @ts-ignore
 import BaseIterator, { DirectoryEntry, FileEntry, LinkEntry, SymbolicLinkEntry } from 'tar-iterator';
 
 describe('exports .ts', () => {

@@ -5,7 +5,6 @@ import path from 'path';
 import Pinkie from 'pinkie-promise';
 import rimraf2 from 'rimraf2';
 
-// @ts-ignore
 import TarIterator from 'tar-iterator';
 import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
 import validateFiles from '../lib/validateFiles.ts';
