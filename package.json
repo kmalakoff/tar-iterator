@@ -54,6 +54,7 @@
   "scripts": {
     "build": "tsds build",
     "format": "biome check --write --unsafe",
+    "prepublishOnly": "tsds validate",
     "test": "mocha --no-timeouts test/**/*.test.*",
     "test:engines": "nvu engines tsds test:node --no-timeouts",
     "version": "tsds version"
@@ -61,20 +62,18 @@
   "dependencies": {
     "call-once-fn": "*",
     "extract-base-iterator": "*",
-    "lodash.compact": "*",
-    "mkdirp-classic": "*",
-    "on-one": "*",
-    "rimraf2": "*",
-    "tar-stream-compat": "*"
+    "on-one": "*"
   },
   "devDependencies": {
-    "@types/mocha": "*",
-    "@types/node": "*",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.10.1",
     "cr": "*",
     "fs-iterator": "*",
     "fs-stats-spys": "*",
+    "mkdirp-classic": "*",
     "pinkie-promise": "*",
     "queue-cb": "*",
+    "rimraf2": "*",
     "unbzip2-stream": "*"
   },
   "engines": {
