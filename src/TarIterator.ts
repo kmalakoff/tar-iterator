@@ -29,6 +29,7 @@ export default class TarIterator extends BaseIterator {
     // Note: options passed here are ExtractOptions (strip, force, etc.)
     // TarExtract uses TarExtractOptions (filenameEncoding, etc.) which is different
     this.extract = new TarExtract();
+    this.lock.extract = this.extract;
 
     const pipe = (cb) => {
       try {
@@ -36,6 +37,9 @@ export default class TarIterator extends BaseIterator {
       } catch (err) {
         cb(err);
       }
+
+      // Store source stream in lock for cleanup
+      this.lock.sourceStream = source as NodeJS.ReadableStream;
 
       const end = once(cb);
       const self = this;
@@ -63,12 +67,11 @@ export default class TarIterator extends BaseIterator {
   }
 
   end(err?: Error) {
-    if (this.lock) {
-      this.lock.err = err;
-      this.lock.release();
-      this.lock = null;
-    } else {
-      BaseIterator.prototype.end.call(this, err); // call in lock release so end is properly handled
+    const lock = this.lock;
+    if (lock) {
+      this.lock = null; // Clear FIRST to prevent re-entrancy
+      lock.err = err;
+      lock.release(); // Lock.__destroy() handles BaseIterator.end()
     }
     this.extract = null;
   }
