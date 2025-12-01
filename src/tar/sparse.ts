@@ -159,10 +159,13 @@ export class SparseStream extends EntryStream {
    * Push data from the tar archive (actual sparse data chunk)
    * Overrides EntryStream.push() to reconstruct sparse file with holes.
    */
-  push(data: Buffer): void {
-    if (this.ended) return;
+  push(data: Buffer | null): boolean {
+    // Allow null through to signal end
+    if (data === null) return super.push(null);
+    if (this.ended) return false;
 
     let dataOffset = 0;
+    let result = true;
 
     while (dataOffset < data.length && this.currentEntry < this.entries.length) {
       const entry = this.entries[this.currentEntry];
@@ -178,7 +181,7 @@ export class SparseStream extends EntryStream {
       const toEmit = Math.min(this.entryBytesRemaining, data.length - dataOffset);
       if (toEmit > 0) {
         const chunk = data.slice(dataOffset, dataOffset + toEmit);
-        super.push(chunk);
+        result = super.push(chunk);
         dataOffset += toEmit;
         this.virtualPosition += toEmit;
         this.entryBytesRemaining -= toEmit;
@@ -192,6 +195,7 @@ export class SparseStream extends EntryStream {
         }
       }
     }
+    return result;
   }
 
   /**
