@@ -8,7 +8,7 @@ import rimraf2 from 'rimraf2';
 import TarIterator from 'tar-iterator';
 import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';
-import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import { DATA_DIR, TARGET } from '../lib/constants.ts';
 import validateFiles from '../lib/validateFiles.ts';
 
 function extract(iterator, dest, options, callback) {
@@ -40,8 +40,8 @@ function extract(iterator, dest, options, callback) {
 
 describe('callback', () => {
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, () => {
-      mkdirp(TMP_DIR, callback);
+    rimraf2(TARGET, { disableGlob: true }, () => {
+      mkdirp(TARGET, callback);
     });
   });
 

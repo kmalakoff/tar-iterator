@@ -9,7 +9,7 @@ import rimraf2 from 'rimraf2';
 import TarIterator from 'tar-iterator';
 import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';
-import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import { DATA_DIR, TARGET } from '../lib/constants.ts';
 import validateFiles from '../lib/validateFiles.ts';
 
 function extract(iterator, dest, options, callback) {
@@ -53,8 +53,8 @@ describe('promise', () => {
   })();
 
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, () => {
-      mkdirp(TMP_DIR, callback);
+    rimraf2(TARGET, { disableGlob: true }, () => {
+      mkdirp(TARGET, callback);
     });
   });
 
@@ -232,8 +232,7 @@ describe('promise', () => {
     });
   });
 
-  // TODO: investigate the throwing and promise race condition in node 0.8
-  describe.skip('unhappy path', () => {
+  describe('unhappy path', () => {
     it('should fail with bad path', (done) => {
       const options = { now: new Date(), strip: 2 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar' + 'does-not-exist')), TARGET, options, (err) => {
