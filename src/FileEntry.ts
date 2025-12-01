@@ -39,7 +39,7 @@ export default class TarFileEntry extends FileEntry {
 
   _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): undefined {
     if (!this.stream) {
-      callback(new Error('Zip FileEntry missing stream. Check for calling create multiple times'));
+      callback(new Error('FileEntry missing stream. Check for calling create multiple times'));
       return;
     }
 

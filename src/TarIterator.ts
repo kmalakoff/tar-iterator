@@ -1,16 +1,18 @@
 import once from 'call-once-fn';
 import BaseIterator from 'extract-base-iterator';
 import fs from 'fs';
-import * as tarStream from 'tar-stream-compat';
 
 import Lock from './lib/Lock.ts';
 import nextEntry from './nextEntry.ts';
+import TarExtract from './tar/TarExtract.ts';
 
 import type { ExtractOptions } from './types.ts';
 
 export default class TarIterator extends BaseIterator {
+  /** @internal @hidden */
   lock: Lock;
-  extract: NodeJS.WritableStream;
+  /** @internal @hidden */
+  extract: TarExtract;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
@@ -23,7 +25,11 @@ export default class TarIterator extends BaseIterator {
     };
     this.processing.push(setup);
 
-    this.extract = tarStream.extract();
+    // Use our pure TarExtract instead of tar-stream-compat
+    // Note: options passed here are ExtractOptions (strip, force, etc.)
+    // TarExtract uses TarExtractOptions (filenameEncoding, etc.) which is different
+    this.extract = new TarExtract();
+
     const pipe = (cb) => {
       try {
         if (typeof source === 'string') source = fs.createReadStream(source);
@@ -32,9 +38,22 @@ export default class TarIterator extends BaseIterator {
       }
 
       const end = once(cb);
-      (source as NodeJS.ReadableStream).on('data', () => end());
+      const self = this;
+      (source as NodeJS.ReadableStream).on('data', function onData(chunk) {
+        try {
+          if (self.extract) self.extract.write(chunk);
+        } catch (err) {
+          // Handle synchronous errors from TarExtract (e.g., invalid format)
+          end(err);
+        }
+      });
+      (source as NodeJS.ReadableStream).on('data', function onFirstData() {
+        end();
+      });
       (source as NodeJS.ReadableStream).on('error', end);
-      (source as NodeJS.ReadableStream).pipe(this.extract);
+      (source as NodeJS.ReadableStream).on('end', function onEnd() {
+        if (self.extract) self.extract.end();
+      });
     };
     pipe((err) => {
       this.processing.remove(setup);
