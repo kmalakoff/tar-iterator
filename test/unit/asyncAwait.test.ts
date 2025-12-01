@@ -6,7 +6,7 @@ import Pinkie from 'pinkie-promise';
 import rimraf2 from 'rimraf2';
 
 import TarIterator from 'tar-iterator';
-import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import { DATA_DIR, TARGET } from '../lib/constants.ts';
 import validateFiles from '../lib/validateFiles.ts';
 
 async function extract(iterator, dest, options) {
@@ -56,8 +56,8 @@ describe('asyncAwait', () => {
   })();
 
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, () => {
-      mkdirp(TMP_DIR, callback);
+    rimraf2(TARGET, { disableGlob: true }, () => {
+      mkdirp(TARGET, callback);
     });
   });
 
