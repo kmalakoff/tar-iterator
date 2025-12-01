@@ -20,6 +20,11 @@ export type TarNext = () => undefined;
 export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
 
 export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): undefined {
+  // Guard: bail early if iterator already ended
+  if (!iterator.lock || iterator.isDone()) {
+    return callback(null, { done: true, value: null });
+  }
+
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
@@ -41,7 +46,9 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
   const onError = callback;
   const onEnd = callback.bind(null, null);
   const onEntry = function onEntry(header, stream, next: TarNext) {
-    if (iterator.isDone()) {
+    // Guard: skip if iterator already ended (stale lock)
+    if (!iterator.lock || iterator.isDone()) {
+      stream.resume(); // drain stream
       return nextCallback(null, null, next);
     }
 
