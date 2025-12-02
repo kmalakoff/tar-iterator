@@ -3,14 +3,8 @@
  */
 
 import assert from 'assert';
+import { allocBuffer } from 'extract-base-iterator';
 import { checksum, decodeLongPath, decodeOct, decodePax, isGnu, isUstar, overflow, parseHeader, toType } from '../../src/tar/headers.ts';
-
-// Helper to create a zero-filled buffer (Node 0.8 compatible)
-function allocBuffer(size: number): Buffer {
-  const buf = new Buffer(size);
-  for (let i = 0; i < size; i++) buf[i] = 0;
-  return buf;
-}
 
 // Helper to create a 512-byte header buffer
 function createHeader(fields: { name?: string; mode?: number; uid?: number; gid?: number; size?: number; mtime?: number; typeflag?: number; type?: string; linkname?: string; uname?: string; gname?: string; devmajor?: number; devminor?: number; prefix?: string }): Buffer {

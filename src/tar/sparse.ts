@@ -15,6 +15,7 @@
  * Node 0.8 compatible - uses only basic Buffer operations.
  */
 
+import { allocBuffer } from 'extract-base-iterator';
 import { SPARSE_ENTRIES_IN_HEADER, SPARSE_ENTRY_NUMBYTES_SIZE, SPARSE_ENTRY_OFFSET_SIZE, SPARSE_ENTRY_SIZE, SPARSE_EXTENDED_ENTRIES, SPARSE_EXTENDED_ISEXTENDED_OFFSET, SPARSE_ISEXTENDED_OFFSET, SPARSE_OFFSET, SPARSE_REALSIZE_OFFSET, SPARSE_REALSIZE_SIZE } from './constants.ts';
 import EntryStream from './EntryStream.ts';
 import { decodeOct } from './headers.ts';
@@ -25,10 +26,8 @@ let zeroBuffer: Buffer | null = null;
 
 function getZeroBuffer(): Buffer {
   if (!zeroBuffer) {
-    zeroBuffer = new Buffer(ZERO_BUFFER_SIZE);
-    for (let i = 0; i < ZERO_BUFFER_SIZE; i++) {
-      zeroBuffer[i] = 0;
-    }
+    // allocBuffer already zero-fills on Node 4.5+, manual fill for Node 0.8
+    zeroBuffer = allocBuffer(ZERO_BUFFER_SIZE);
   }
   return zeroBuffer;
 }
