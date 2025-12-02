@@ -25,6 +25,7 @@
  */
 
 import assert from 'assert';
+import { allocBuffer, allocBufferUnsafe } from 'extract-base-iterator';
 import fs from 'fs';
 import path from 'path';
 import TarIterator, { type TarCodedError, TarErrorCode } from 'tar-iterator';
@@ -400,9 +401,7 @@ describe('TarExtract - Edge Cases', () => {
 
   before((done) => {
     // Create empty tar (two 512-byte blocks of zeros)
-    // Use new Buffer + manual zero for Node 0.8 compatibility (matches sparse.ts pattern)
-    const emptyBuffer = new Buffer(1024);
-    for (let i = 0; i < 1024; i++) emptyBuffer[i] = 0;
+    const emptyBuffer = allocBuffer(1024);
     fs.writeFile(emptyTarPath, emptyBuffer, done);
   });
 
@@ -461,10 +460,10 @@ describe('TarExtract - File Content', () => {
             chunks.push(chunk);
           });
           entry.stream.on('end', () => {
-            // Concatenate chunks (Node 0.8 compatible)
+            // Concatenate chunks
             let totalLength = 0;
             for (let i = 0; i < chunks.length; i++) totalLength += chunks[i].length;
-            const content = new Buffer(totalLength);
+            const content = allocBufferUnsafe(totalLength);
             let offset = 0;
             for (let i = 0; i < chunks.length; i++) {
               chunks[i].copy(content, offset);
@@ -576,10 +575,10 @@ describe('TarExtract - GNU Sparse Files', () => {
           chunks.push(chunk);
         });
         entry.stream.on('end', () => {
-          // Concatenate chunks (Node 0.8 compatible)
+          // Concatenate chunks
           let totalLength = 0;
           for (let i = 0; i < chunks.length; i++) totalLength += chunks[i].length;
-          const content = new Buffer(totalLength);
+          const content = allocBufferUnsafe(totalLength);
           let offset = 0;
           for (let i = 0; i < chunks.length; i++) {
             chunks[i].copy(content, offset);

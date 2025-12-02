@@ -1,6 +1,8 @@
+import { bufferFrom } from 'extract-base-iterator';
+
 if (!Buffer.from) {
   // @ts-expect-error
-  Buffer.from = function bufferFrom(data, encoding) {
-    return new Buffer(data, encoding);
+  Buffer.from = function _bufferFrom(data, encoding) {
+    return bufferFrom(data, encoding);
   };
 }

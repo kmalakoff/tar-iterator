@@ -9,7 +9,7 @@
  */
 
 import { EventEmitter } from 'events';
-import BufferList from './BufferList.ts';
+import { allocBufferUnsafe, BufferList } from 'extract-base-iterator';
 import { BLOCK_SIZE, HEADER_SIZE } from './constants.ts';
 import EntryStream from './EntryStream.ts';
 import { decodeLongPath, decodePax, overflow, type ParseOptions, parseHeader, type TarHeader } from './headers.ts';
@@ -451,7 +451,7 @@ export default class TarExtract extends EventEmitter {
    * Concatenate buffers (Node 0.8 compatible fallback)
    */
   private _concatBuffers(buffers: Buffer[], totalLength: number): Buffer {
-    const result = new Buffer(totalLength);
+    const result = allocBufferUnsafe(totalLength);
     let offset = 0;
     for (let i = 0; i < buffers.length; i++) {
       const buf = buffers[i];
