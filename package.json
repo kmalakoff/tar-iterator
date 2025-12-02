@@ -65,15 +65,18 @@
     "on-one": "*"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^24.10.1",
+    "@biomejs/biome": "*",
+    "@types/mocha": "*",
+    "@types/node": "*",
     "cr": "*",
     "fs-iterator": "*",
     "fs-stats-spys": "*",
     "mkdirp-classic": "*",
+    "node-version-use": "*",
     "pinkie-promise": "*",
     "queue-cb": "*",
     "rimraf2": "*",
+    "ts-dev-stack": "*",
     "unbzip2-stream": "*"
   },
   "engines": {
