@@ -3,7 +3,7 @@
  */
 
 import assert from 'assert';
-import { allocBuffer } from 'extract-base-iterator';
+import { allocBuffer, bufferFrom } from 'extract-base-iterator';
 import { checksum, decodeLongPath, decodeOct, decodePax, isGnu, isUstar, overflow, parseHeader, toType } from '../../src/tar/headers.ts';
 
 // Helper to create a 512-byte header buffer
@@ -185,17 +185,17 @@ describe('TAR headers', () => {
 
   describe('decodeOct', () => {
     it('decodes basic octal', () => {
-      const buf = Buffer.from('0000755\0');
+      const buf = bufferFrom('0000755\0');
       assert.strictEqual(decodeOct(buf, 0, 8), 493);
     });
 
     it('handles leading spaces', () => {
-      const buf = Buffer.from('   755 \0');
+      const buf = bufferFrom('   755 \0');
       assert.strictEqual(decodeOct(buf, 0, 8), 493);
     });
 
     it('decodes zero', () => {
-      const buf = Buffer.from('0000000\0');
+      const buf = bufferFrom('0000000\0');
       assert.strictEqual(decodeOct(buf, 0, 8), 0);
     });
   });
@@ -203,14 +203,14 @@ describe('TAR headers', () => {
   describe('decodePax', () => {
     it('decodes basic PAX record', () => {
       const pax = '21 path=longname.txt\n';
-      const buf = Buffer.from(pax);
+      const buf = bufferFrom(pax);
       const result = decodePax(buf);
       assert.strictEqual(result.path, 'longname.txt');
     });
 
     it('decodes multiple PAX fields', () => {
       const pax = '21 path=longname.txt\n19 linkpath=target\n';
-      const buf = Buffer.from(pax);
+      const buf = bufferFrom(pax);
       const result = decodePax(buf);
       assert.strictEqual(result.path, 'longname.txt');
       assert.strictEqual(result.linkpath, 'target');
@@ -220,7 +220,7 @@ describe('TAR headers', () => {
   describe('decodeLongPath', () => {
     it('decodes GNU long path', () => {
       const longPath = 'this/is/a/very/long/path/that/exceeds/the/maximum/length/allowed/in/standard/tar/headers/filename.txt';
-      const buf = Buffer.from(`${longPath}\0`);
+      const buf = bufferFrom(`${longPath}\0`);
       const result = decodeLongPath(buf, 'utf8');
       assert.strictEqual(result, longPath);
     });
