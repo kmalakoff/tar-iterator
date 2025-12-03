@@ -29,8 +29,8 @@ import { allocBuffer, allocBufferUnsafe } from 'extract-base-iterator';
 import fs from 'fs';
 import path from 'path';
 import TarIterator, { type TarCodedError, TarErrorCode } from 'tar-iterator';
-import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';
+import bz2 from '../lib/bz2-stream.ts';
 import { DATA_DIR, TMP_DIR } from '../lib/constants.ts';
 
 interface Entry {
