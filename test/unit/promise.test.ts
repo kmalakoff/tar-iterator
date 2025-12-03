@@ -1,4 +1,3 @@
-import '../lib/polyfills.ts';
 import assert from 'assert';
 import fs from 'fs';
 import mkdirp from 'mkdirp-classic';
@@ -7,8 +6,8 @@ import Pinkie from 'pinkie-promise';
 import Queue from 'queue-cb';
 import rimraf2 from 'rimraf2';
 import TarIterator from 'tar-iterator';
-import bz2 from 'unbzip2-stream';
 import zlib from 'zlib';
+import bz2 from '../lib/bz2-stream.ts';
 import { DATA_DIR, TARGET } from '../lib/constants.ts';
 import validateFiles from '../lib/validateFiles.ts';
 
@@ -139,8 +138,7 @@ describe('promise', () => {
 
     it('extract - stream bz2', (done) => {
       const options = { now: new Date() };
-      let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.bz2'));
-      source = source.pipe(bz2());
+      const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.bz2')).pipe(bz2());
       extract(new TarIterator(source), TARGET, options, (err) => {
         if (err) {
           done(err.message);

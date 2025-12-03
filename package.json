@@ -76,6 +76,7 @@
     "pinkie-promise": "*",
     "queue-cb": "*",
     "rimraf2": "*",
+    "through": "*",
     "ts-dev-stack": "*",
     "unbzip2-stream": "*"
   },

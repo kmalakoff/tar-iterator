@@ -1,4 +1,3 @@
-import '../lib/polyfills.ts';
 import assert from 'assert';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
