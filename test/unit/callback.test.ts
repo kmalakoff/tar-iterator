@@ -1,9 +1,9 @@
 import assert from 'assert';
 import fs from 'fs';
+import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
-import rimraf2 from 'rimraf2';
 import TarIterator from 'tar-iterator';
 import zlib from 'zlib';
 import bz2 from '../lib/bz2-stream.ts';
@@ -39,7 +39,7 @@ function extract(iterator, dest, options, callback) {
 
 describe('callback', () => {
   beforeEach((callback) => {
-    rimraf2(TARGET, { disableGlob: true }, () => {
+    safeRm(TARGET, () => {
       mkdirp(TARGET, callback);
     });
   });

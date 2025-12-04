@@ -1,8 +1,8 @@
 import assert from 'assert';
+import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
-import rimraf2 from 'rimraf2';
 
 import TarIterator from 'tar-iterator';
 import { DATA_DIR, TARGET } from '../lib/constants.ts';
@@ -35,7 +35,7 @@ describe('asyncIterator', () => {
   })();
 
   beforeEach((callback) => {
-    rimraf2(TARGET, { disableGlob: true }, () => {
+    safeRm(TARGET, () => {
       mkdirp(TARGET, callback);
     });
   });
