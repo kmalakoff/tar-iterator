@@ -43,8 +43,9 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
     });
   }) as NextCallback;
 
-  const onError = callback;
-  const onEnd = callback.bind(null, null);
+  // Use nextCallback for all events to ensure once() wrapper is respected
+  const onError = (err: Error) => nextCallback(err);
+  const onEnd = () => nextCallback();
   const onEntry = function onEntry(header, stream, next: TarNext) {
     // Guard: skip if iterator already ended (stale lock)
     if (!iterator.lock || iterator.isDone()) {
