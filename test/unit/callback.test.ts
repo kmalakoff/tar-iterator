@@ -59,7 +59,7 @@ describe('callback', () => {
         },
         (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           assert.ok(!iterator.extract);
@@ -72,13 +72,13 @@ describe('callback', () => {
       const options = { now: new Date(), concurrency: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -90,13 +90,13 @@ describe('callback', () => {
       const options = { now: new Date(), concurrency: Infinity };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -109,13 +109,13 @@ describe('callback', () => {
       const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar'));
       extract(new TarIterator(source), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -128,13 +128,13 @@ describe('callback', () => {
       const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.tar.bz2')).pipe(bz2());
       extract(new TarIterator(source), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -148,13 +148,13 @@ describe('callback', () => {
       const pipleine = source.pipe(zlib.createUnzip());
       extract(new TarIterator(pipleine), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -166,13 +166,13 @@ describe('callback', () => {
       const options = { now: new Date(), strip: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
           done();
@@ -184,13 +184,13 @@ describe('callback', () => {
       const options = { now: new Date(), strip: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, (err) => {
         if (err) {
-          done(err.message);
+          done(err);
           return;
         }
 
         validateFiles(options, 'tar', (err) => {
           if (err) {
-            done(err.message);
+            done(err);
             return;
           }
 
@@ -199,13 +199,13 @@ describe('callback', () => {
 
             extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options }, (err) => {
               if (err) {
-                done(err.message);
+                done(err);
                 return;
               }
 
               validateFiles(options, 'tar', (err) => {
                 if (err) {
-                  done(err.message);
+                  done(err);
                   return;
                 }
                 done();
