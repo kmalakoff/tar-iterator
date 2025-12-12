@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "call-once-fn": "^1.1.8",
-    "extract-base-iterator": "^2.4.11",
+    "extract-base-iterator": "^2.4.12",
     "on-one": "^1.0.8"
   },
   "devDependencies": {
@@ -78,7 +78,7 @@
     "queue-cb": "^1.6.1",
     "through": "^2.3.8",
     "ts-dev-stack": "^1.21.3",
-    "tsds-config": "^0.2.0",
+    "tsds-config": "^0.2.1",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {
