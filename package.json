@@ -62,14 +62,14 @@
   },
   "dependencies": {
     "call-once-fn": "^1.1.9",
-    "extract-base-iterator": "^2.4.12",
+    "extract-base-iterator": "^2.4.13",
     "on-one": "^1.0.9"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.1",
     "cr": "^0.1.0",
-    "fs-iterator": "^6.1.10",
+    "fs-iterator": "^6.1.11",
     "fs-remove-compat": "^0.2.2",
     "fs-stats-spys": "^1.2.8",
     "mkdirp-classic": "^0.5.3",
