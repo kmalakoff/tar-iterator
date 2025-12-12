@@ -13,9 +13,9 @@ import Module from 'module';
 import through from 'through';
 
 // ESM-compatible require for CommonJS modules
-var _require = typeof require === 'undefined' ? Module.createRequire(import.meta.url) : require;
-var bitIterator = _require('unbzip2-stream/lib/bit_iterator');
-var bz2 = _require('unbzip2-stream/lib/bzip2');
+const _require = typeof require === 'undefined' ? Module.createRequire(import.meta.url) : require;
+const bitIterator = _require('unbzip2-stream/lib/bit_iterator');
+const bz2 = _require('unbzip2-stream/lib/bzip2');
 
 interface BitReader {
   (n: number | null): number;
