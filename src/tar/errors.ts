@@ -1,7 +1,7 @@
 /**
  * TAR Error Codes for programmatic error handling
  *
- * Node 0.8 compatible - uses var and object literals.
+ * Node 0.8 compatible - uses let and object literals.
  */
 
 /**
@@ -14,7 +14,7 @@ export interface TarCodedError extends Error {
 /**
  * TAR-specific error codes for user-facing errors
  */
-export var TarErrorCode = {
+export const TarErrorCode = {
   /** Invalid tar header checksum - archive may be corrupted or needs decompression */
   INVALID_CHECKSUM: 'TAR_INVALID_CHECKSUM',
   /** Unknown tar format - not USTAR, GNU, or V7 */
@@ -29,7 +29,7 @@ export var TarErrorCode = {
  * @returns Error with code property
  */
 export function createTarError(message: string, code: string): TarCodedError {
-  var err = new Error(message) as TarCodedError;
+  const err = new Error(message) as TarCodedError;
   err.code = code;
   return err;
 }
