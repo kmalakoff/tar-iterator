@@ -7,7 +7,7 @@ Extract contents from tar archive type using an iterator API using streams or pa
 ```js
 var assert = require('assert');
 var fs = require('fs');
-var TarIterator = require('tar-iterator'));
+var TarIterator = require('tar-iterator');
 
 
 (async function() {
@@ -55,7 +55,7 @@ var TarIterator = require('tar-iterator'));
 
 ```js
 var assert = require('assert');
-var TarIterator = require('tar-iterator'));
+var TarIterator = require('tar-iterator');
 
 // one by one
 (async function() {
@@ -109,7 +109,7 @@ var TarIterator = require('tar-iterator'));
 ```js
 var assert = require('assert');
 var Queue = require('queue-cb');
-var TarIterator = require('tar-iterator'));
+var TarIterator = require('tar-iterator');
 
 var iterator = new TarIterator('/path/to/archive');
 
