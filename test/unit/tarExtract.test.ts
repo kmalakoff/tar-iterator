@@ -88,6 +88,38 @@ describe('TarExtract - Format Support', () => {
       });
     });
 
+    it('correctly parses files when truncated name ends with "/" (bug regression)', (done) => {
+      // This test verifies the fix for a bug where entries with GNU long paths
+      // were incorrectly classified as directories when the truncated 100-char
+      // name field happened to end with '/'.
+      //
+      // The tar file contains a regular file with path:
+      // "aaa.../subdir/file.txt" (108 chars total)
+      // The truncated 100-char name is "aaa.../subdir/" which ends with '/'
+      //
+      // Bug: The parser checked for trailing '/' BEFORE applying the GNU long path,
+      // causing files to be misclassified as directories.
+      const tarPath = path.join(DATA_DIR, 'gnu-long-path-slash-bug.tar');
+      extractEntries(tarPath, (err, entries) => {
+        if (err) return done(err);
+        assert.ok(entries && entries.length > 0, 'Should have entries');
+
+        const entry = entries?.[0];
+        // The full path should be the complete path, not truncated
+        assert.ok(entry.path.indexOf('file.txt') !== -1, 'Should contain file.txt in the path');
+        assert.ok(entry.path.length > 100, `Path should be >100 chars, got ${entry.path.length}`);
+
+        // CRITICAL: The entry type MUST be 'file', not 'directory'
+        // This is the bug we're testing - with the bug, this would be 'directory'
+        assert.strictEqual(entry.type, 'file', 'Entry should be a file, not a directory');
+
+        // Verify the file has content (directories have size 0)
+        assert.ok(entry.size > 0, 'File should have non-zero size');
+        assert.strictEqual(entry.size, 51, 'File should have correct size');
+        done();
+      });
+    });
+
     it('extracts GNU format archives', (done) => {
       const tarPath = path.join(DATA_DIR, 'gnu.tar');
       extractEntries(tarPath, (err, entries) => {

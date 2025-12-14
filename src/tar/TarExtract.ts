@@ -365,6 +365,15 @@ export default class TarExtract extends EventEmitter {
       header.linkname = this.gnuLongLink;
       this.gnuLongLink = null;
     }
+
+    // Handle old tar versions that use trailing / to indicate directories
+    // This check is done AFTER extensions are applied so we use the final
+    // resolved name (GNU long path or PAX path), not the truncated name field.
+    // This fixes a bug where files with >100 char paths were misclassified
+    // as directories when the truncated 100-char name happened to end with '/'.
+    if (header.type === 'file' && header.name && header.name[header.name.length - 1] === '/') {
+      header.type = 'directory';
+    }
   }
 
   /**

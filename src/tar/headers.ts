@@ -291,7 +291,7 @@ export function parseHeader(buf: Buffer, opts?: ParseOptions): TarHeader | null 
   const gid = decodeOct(buf, GID_OFFSET, GID_SIZE);
   const size = decodeOct(buf, SIZE_OFFSET, SIZE_SIZE);
   const mtime = decodeOct(buf, MTIME_OFFSET, MTIME_SIZE);
-  let type = toType(typeflag);
+  const type = toType(typeflag);
   const linkname = buf[LINKNAME_OFFSET] === 0 ? null : decodeStr(buf, LINKNAME_OFFSET, LINKNAME_SIZE, filenameEncoding);
   const uname = decodeStr(buf, UNAME_OFFSET, UNAME_SIZE);
   const gname = decodeStr(buf, GNAME_OFFSET, GNAME_SIZE);
@@ -323,11 +323,10 @@ export function parseHeader(buf: Buffer, opts?: ParseOptions): TarHeader | null 
     }
   }
 
-  // Handle old tar versions that use trailing / to indicate directories
-  if (typeflag === 0 && name && name[name.length - 1] === '/') {
-    typeflag = TYPE_DIRECTORY;
-    type = 'directory';
-  }
+  // NOTE: Old tar versions use trailing / to indicate directories.
+  // This check is intentionally NOT done here because GNU long path
+  // extensions may change the name. The check is done in TarExtract._applyExtensions()
+  // after the full name is resolved.
 
   return {
     name,
