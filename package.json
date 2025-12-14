@@ -62,18 +62,18 @@
   },
   "dependencies": {
     "call-once-fn": "^1.1.10",
-    "extract-base-iterator": "^2.4.13",
+    "extract-base-iterator": "^2.4.14",
     "on-one": "^1.0.10"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.1",
     "cr": "^0.1.0",
-    "fs-iterator": "^6.1.11",
+    "fs-iterator": "^6.1.12",
     "fs-remove-compat": "^0.2.3",
     "fs-stats-spys": "^1.2.9",
     "mkdirp-classic": "^0.5.3",
-    "node-version-use": "^2.1.5",
+    "node-version-use": "^2.1.6",
     "pinkie-promise": "^2.0.1",
     "queue-cb": "^1.6.3",
     "through": "^2.3.8",

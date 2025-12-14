@@ -171,15 +171,22 @@ describe('TAR headers', () => {
       assert.strictEqual(header, null);
     });
 
-    it('converts trailing slash to directory', () => {
+    it('returns file type for trailing slash (conversion happens in TarExtract)', () => {
+      // Note: Old tar versions use trailing '/' to indicate directories.
+      // This conversion is intentionally done in TarExtract._applyExtensions()
+      // AFTER GNU/PAX extensions are applied (to avoid misclassifying files
+      // with >100 char paths where the truncated name happens to end with '/').
+      // parseHeader() does NOT do this conversion anymore.
       const buf = createHeader({
         name: 'oldstyle/',
-        typeflag: 48,
+        typeflag: 48, // '0' = regular file
       });
 
       const header = parseHeader(buf);
       assert.ok(header);
-      assert.strictEqual(header.type, 'directory');
+      // parseHeader returns 'file' for typeflag '0', the trailing slash
+      // conversion to 'directory' happens later in TarExtract
+      assert.strictEqual(header.type, 'file');
     });
   });
 
