@@ -1,23 +1,22 @@
 import once from 'call-once-fn';
-import BaseIterator from 'extract-base-iterator';
+import BaseIterator, { Lock } from 'extract-base-iterator';
 import fs from 'fs';
 
-import Lock from './lib/Lock.ts';
 import nextEntry from './nextEntry.ts';
 import TarExtract from './tar/TarExtract.ts';
 
-import type { ExtractOptions } from './types.ts';
+import type { Entry, ExtractOptions } from './types.ts';
 
-export default class TarIterator extends BaseIterator {
+export default class TarIterator extends BaseIterator<Entry> {
   /** @internal @hidden */
-  lock: Lock;
+  lock: Lock | null;
   /** @internal @hidden */
-  extract: TarExtract;
+  extract: TarExtract | null;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
     this.lock = new Lock();
-    this.lock.iterator = this;
+    this.lock.onDestroy = (err) => BaseIterator.prototype.end.call(this, err);
 
     let cancelled = false;
     const setup = (): undefined => {
@@ -29,7 +28,6 @@ export default class TarIterator extends BaseIterator {
     // Note: options passed here are ExtractOptions (strip, force, etc.)
     // TarExtract uses TarExtractOptions (filenameEncoding, etc.) which is different
     this.extract = new TarExtract();
-    this.lock.extract = this.extract;
 
     const pipe = (cb) => {
       try {
@@ -38,21 +36,27 @@ export default class TarIterator extends BaseIterator {
         cb(err);
       }
 
-      // Store source stream in lock for cleanup
-      this.lock.sourceStream = source as NodeJS.ReadableStream;
+      // Register cleanup for source stream
+      const stream = source as NodeJS.ReadableStream;
+      this.lock.registerCleanup(() => {
+        const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
+        if (typeof s.destroy === 'function') s.destroy();
+      });
 
       const end = once(cb);
       const self = this;
+      let firstData = true;
       (source as NodeJS.ReadableStream).on('data', function onData(chunk) {
         try {
           if (self.extract) self.extract.write(chunk);
+          if (firstData) {
+            firstData = false;
+            end();
+          }
         } catch (err) {
           // Handle synchronous errors from TarExtract (e.g., invalid format)
           end(err);
         }
-      });
-      (source as NodeJS.ReadableStream).on('data', function onFirstData() {
-        end();
       });
       (source as NodeJS.ReadableStream).on('error', end);
       (source as NodeJS.ReadableStream).on('end', function onEnd() {
