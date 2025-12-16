@@ -61,25 +61,24 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "call-once-fn": "^1.1.10",
-    "extract-base-iterator": "^2.4.14",
-    "on-one": "^1.0.10"
+    "call-once-fn": "^1.0.1",
+    "extract-base-iterator": "^2.6.1",
+    "on-one": "^1.0.0"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^25.0.2",
-    "cr": "^0.1.0",
+    "@types/mocha": "*",
+    "@types/node": "*",
     "fs-iterator": "^6.1.12",
-    "fs-remove-compat": "^0.2.4",
-    "fs-stats-spys": "^1.2.9",
-    "get-file-compat": "^0.1.1",
-    "mkdirp-classic": "^0.5.3",
-    "node-version-use": "^2.1.7",
-    "pinkie-promise": "^2.0.1",
-    "queue-cb": "^1.6.3",
-    "through": "^2.3.8",
-    "ts-dev-stack": "^1.21.3",
-    "tsds-config": "^0.2.2",
+    "fs-remove-compat": "^1.0.0",
+    "fs-stats-spys": "^1.0.0",
+    "get-file-compat": "^2.0.0",
+    "mkdirp-classic": "^0.5.2",
+    "node-version-use": "*",
+    "pinkie-promise": "*",
+    "queue-cb": "^1.0.0",
+    "through": "^2.1.0",
+    "ts-dev-stack": "*",
+    "tsds-config": "*",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {

@@ -25,13 +25,17 @@
  */
 
 import assert from 'assert';
-import { allocBuffer, allocBufferUnsafe } from 'extract-base-iterator';
+import { allocBuffer } from 'extract-base-iterator';
 import fs from 'fs';
 import path from 'path';
 import TarIterator, { type TarCodedError, TarErrorCode } from 'tar-iterator';
+import url from 'url';
 import zlib from 'zlib';
 import bz2 from '../lib/bz2-stream.ts';
-import { DATA_DIR, TMP_DIR } from '../lib/constants.ts';
+
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 
 interface Entry {
   path: string;
@@ -477,39 +481,33 @@ describe('TarExtract - Edge Cases', () => {
 
 describe('TarExtract - File Content', () => {
   it('reads file content correctly', (done) => {
-    // This test verifies that file data streaming actually works
+    // This test verifies that file data extraction actually works
     // gnu.tar contains test.txt with "Hello, world!\n" (14 bytes)
     const tarPath = path.join(DATA_DIR, 'gnu.tar');
     const iterator = new TarIterator(tarPath);
     let contentRead = '';
+    const extractPath = path.join(TMP_DIR, 'gnu-content-test');
 
     iterator.forEach(
-      (entry): undefined => {
+      (entry, callback): undefined => {
         if (entry.path === 'test.txt' && entry.type === 'file') {
-          // Actually read the file content
-          const chunks: Buffer[] = [];
-          entry.stream.on('data', (chunk: Buffer) => {
-            chunks.push(chunk);
+          // Extract file using the proper create() API
+          entry.create(extractPath, { force: true }, (err?: Error) => {
+            if (err) return callback(err);
+            // Read extracted file content
+            fs.readFile(path.join(extractPath, 'test.txt'), 'utf8', (readErr, content) => {
+              if (readErr) return callback(readErr);
+              contentRead = content;
+              callback();
+            });
           });
-          entry.stream.on('end', () => {
-            // Concatenate chunks
-            let totalLength = 0;
-            for (let i = 0; i < chunks.length; i++) totalLength += chunks[i].length;
-            const content = allocBufferUnsafe(totalLength);
-            let offset = 0;
-            for (let i = 0; i < chunks.length; i++) {
-              chunks[i].copy(content, offset);
-              offset += chunks[i].length;
-            }
-            contentRead = content.toString('utf8');
-            // Must call destroy to signal entry is fully consumed
-            entry.destroy();
-          });
-          entry.stream.resume();
         } else {
           entry.destroy();
+          callback();
         }
       },
+      // Use callbacks: true to wait for async extraction to complete
+      { callbacks: true },
       (err): undefined => {
         if (err) return done(err) as undefined;
         // Verify we actually read the expected content
@@ -594,54 +592,48 @@ describe('TarExtract - GNU Sparse Files', () => {
     // - Holes: zeros from 4-511 and 516-1023
     const tarPath = path.join(DATA_DIR, 'sparse.tar');
     const iterator = new TarIterator(tarPath);
+    const extractPath = path.join(TMP_DIR, 'sparse-test');
 
     iterator.forEach(
-      (entry): undefined => {
+      (entry, callback): undefined => {
         assert.strictEqual(entry.path, 'sparse-test.txt', 'Should have correct filename');
         assert.strictEqual(entry.type, 'file', 'Should report type as file (not gnu-sparse)');
-        assert.strictEqual(entry.size, 1024, 'Should report reconstructed file size');
+        assert.strictEqual((entry as unknown as Entry).size, 1024, 'Should report reconstructed file size');
 
-        // Read all content to verify reconstruction
-        const chunks: Buffer[] = [];
-        entry.stream.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-        entry.stream.on('end', () => {
-          // Concatenate chunks
-          let totalLength = 0;
-          for (let i = 0; i < chunks.length; i++) totalLength += chunks[i].length;
-          const content = allocBufferUnsafe(totalLength);
-          let offset = 0;
-          for (let i = 0; i < chunks.length; i++) {
-            chunks[i].copy(content, offset);
-            offset += chunks[i].length;
-          }
+        // Extract file using the proper create() API
+        entry.create(extractPath, { force: true }, (err?: Error) => {
+          if (err) return callback(err);
 
-          // Verify content
-          assert.strictEqual(content.length, 1024, 'Reconstructed content should be 1024 bytes');
-          assert.strictEqual(content.slice(0, 4).toString(), 'AAAA', 'First 4 bytes should be "AAAA"');
-          assert.strictEqual(content.slice(512, 516).toString(), 'BBBB', 'Bytes at 512-515 should be "BBBB"');
+          // Read extracted file content
+          fs.readFile(path.join(extractPath, 'sparse-test.txt'), (readErr, content) => {
+            if (readErr) return callback(readErr);
 
-          // Verify holes are zeros
-          let holesCorrect = true;
-          for (let i = 4; i < 512; i++) {
-            if (content[i] !== 0) {
-              holesCorrect = false;
-              break;
+            // Verify content
+            assert.strictEqual(content.length, 1024, 'Reconstructed content should be 1024 bytes');
+            assert.strictEqual(content.slice(0, 4).toString(), 'AAAA', 'First 4 bytes should be "AAAA"');
+            assert.strictEqual(content.slice(512, 516).toString(), 'BBBB', 'Bytes at 512-515 should be "BBBB"');
+
+            // Verify holes are zeros
+            let holesCorrect = true;
+            for (let i = 4; i < 512; i++) {
+              if (content[i] !== 0) {
+                holesCorrect = false;
+                break;
+              }
             }
-          }
-          for (let i = 516; i < 1024; i++) {
-            if (content[i] !== 0) {
-              holesCorrect = false;
-              break;
+            for (let i = 516; i < 1024; i++) {
+              if (content[i] !== 0) {
+                holesCorrect = false;
+                break;
+              }
             }
-          }
-          assert.ok(holesCorrect, 'Holes should be filled with zeros');
-
-          entry.destroy();
+            assert.ok(holesCorrect, 'Holes should be filled with zeros');
+            callback();
+          });
         });
-        entry.stream.resume();
       },
+      // Use callbacks: true to wait for async extraction to complete
+      { callbacks: true },
       (err): undefined => {
         if (err) return done(err) as undefined;
         done();

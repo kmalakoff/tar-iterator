@@ -15,12 +15,15 @@ import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import TarIterator, { type SymbolicLinkEntry } from 'tar-iterator';
+import url from 'url';
 import zlib from 'zlib';
-import { TMP_DIR } from '../lib/constants.ts';
+
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 
 // Test configuration
 const TAR_URL = 'https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.gz';
-const CACHE_DIR = path.join(process.cwd(), '.cache');
+const CACHE_DIR = path.join(__dirname, '..', '..', '.cache');
 const CACHE_PATH = path.join(CACHE_DIR, 'node-v24.12.0-linux-x64.tar.gz');
 const TAR_EXTRACT_DIR = path.join(TMP_DIR, 'tar');
 const TAR_ITERATOR_EXTRACT_DIR = path.join(TMP_DIR, 'tar-iterator');
@@ -347,7 +350,8 @@ describe('Comparison - tar-iterator vs native tar', () => {
             }
 
             // Check mode (permissions), but allow for minor differences due to umask
-            const modeDiff = Math.abs(statTar.mode - statTarIterator.mode);
+            // Use Number() to handle BigInt on older Windows Node versions
+            const modeDiff = Math.abs(Number(statTar.mode) - Number(statTarIterator.mode));
             if (modeDiff > 0o22) {
               // Allow up to umask differences (typically 0o022)
               differences.push(`Mode mismatch for ${path}: native=${statTar.mode.toString(8)}, tar-iterator=${statTarIterator.mode.toString(8)}`);

@@ -4,15 +4,44 @@
  * Event-based TAR parser that emits 'entry' events for each file.
  * Node 0.8 compatible.
  *
- * State Machine (Phase 1 MVP):
- * HEADER -> FILE_DATA -> PADDING -> HEADER
+ * State Machine:
+ * ```
+ *                          ┌─────────────────────────────────────────────┐
+ *                          │                                             │
+ *  HEADER ─┬─ [file] ────> FILE_DATA ──> PADDING ─────────────────────>──┤
+ *          │                                                             │
+ *          ├─ [gnu-long-path] ──> GNU_LONG_PATH ──> PADDING ──>──────────┤
+ *          │                                                             │
+ *          ├─ [gnu-long-link] ──> GNU_LONG_LINK ──> PADDING ──>──────────┤
+ *          │                                                             │
+ *          ├─ [pax-header] ──> PAX_HEADER ──> PADDING ──>────────────────┤
+ *          │                                                             │
+ *          ├─ [gnu-sparse] ─┬─> SPARSE_EXTENDED ──> SPARSE_DATA ──>──────┤
+ *          │                │                                            │
+ *          │                └─> SPARSE_DATA ──> PADDING ──>──────────────┤
+ *          │                                                             │
+ *          └─ [null header] ──> END                                      │
+ *                                                                        │
+ *          <─────────────────────────────────────────────────────────────┘
+ * ```
+ *
+ * Extension handling:
+ * - GNU LongPath/LongLink headers store path for NEXT entry
+ * - PAX headers store attributes for NEXT entry (or all entries if global)
+ * - Extensions are applied when the actual file header is processed
+ *
+ * Events:
+ *   'entry' (header: TarHeader, stream: Readable, next: () => void)
+ *   'error' (err: Error)
+ *   'finish' ()
  */
 
 import { EventEmitter } from 'events';
-import { allocBufferUnsafe, BufferList } from 'extract-base-iterator';
+import { BufferList } from 'extract-base-iterator';
 import { BLOCK_SIZE, HEADER_SIZE } from './constants.ts';
 import EntryStream from './EntryStream.ts';
-import { decodeLongPath, decodePax, overflow, type ParseOptions, parseHeader, type TarHeader } from './headers.ts';
+import { applyExtensions, createExtensionState, type ExtensionState, finalizeExtension } from './Extensions.ts';
+import { overflow, type ParseOptions, parseHeader, type TarHeader } from './headers.ts';
 import { parseGnuSparseExtended, parseGnuSparseHeader, type SparseInfo, SparseStream, sparseDataSize } from './sparse.ts';
 
 // Parser states
@@ -64,13 +93,8 @@ export default class TarExtract extends EventEmitter {
   // Pending entry to emit (waiting for consumer to set up listeners)
   private pendingEntry: { header: TarHeader; stream: EntryStream; next: () => void } | null = null;
 
-  // GNU/PAX extension data for next entry
-  private gnuLongPath: string | null = null;
-  private gnuLongLink: string | null = null;
-  private paxHeader: Record<string, string> | null = null;
-  private paxGlobal: Record<string, string> = {};
-  private extensionData: Buffer[] = [];
-  private extensionRemaining = 0;
+  // GNU/PAX extension state (managed by Extensions module)
+  private extState: ExtensionState;
 
   // GNU sparse file state
   private sparseInfo: SparseInfo | null = null;
@@ -82,6 +106,7 @@ export default class TarExtract extends EventEmitter {
     this.buffer = new BufferList();
     this.state = STATE_HEADER;
     this.options = options || {};
+    this.extState = createExtensionState();
   }
 
   /**
@@ -254,30 +279,30 @@ export default class TarExtract extends EventEmitter {
 
     // Handle GNU/PAX extension headers - collect data silently
     if (header.type === 'gnu-long-path') {
-      this.extensionRemaining = header.size;
-      this.extensionData = [];
+      this.extState.extensionRemaining = header.size;
+      this.extState.extensionData = [];
       this.state = STATE_GNU_LONG_PATH;
       return true; // Continue processing
     }
 
     if (header.type === 'gnu-long-link-path') {
-      this.extensionRemaining = header.size;
-      this.extensionData = [];
+      this.extState.extensionRemaining = header.size;
+      this.extState.extensionData = [];
       this.state = STATE_GNU_LONG_LINK;
       return true; // Continue processing
     }
 
     if (header.type === 'pax-header') {
-      this.extensionRemaining = header.size;
-      this.extensionData = [];
+      this.extState.extensionRemaining = header.size;
+      this.extState.extensionData = [];
       this.state = STATE_PAX_HEADER;
       return true; // Continue processing
     }
 
     if (header.type === 'pax-global-header') {
       // For global headers, we read them but they apply to all subsequent entries
-      this.extensionRemaining = header.size;
-      this.extensionData = [];
+      this.extState.extensionRemaining = header.size;
+      this.extState.extensionData = [];
       this.state = STATE_PAX_HEADER; // Same handling, different application
       return true; // Continue processing
     }
@@ -288,7 +313,7 @@ export default class TarExtract extends EventEmitter {
       this.sparseInfo = parseGnuSparseHeader(headerBuf);
 
       // Apply extensions (e.g., GNU long path)
-      this._applyExtensions(header);
+      applyExtensions(header, this.extState);
 
       // Update header size to real (reconstructed) file size
       header.size = this.sparseInfo.realSize;
@@ -305,7 +330,7 @@ export default class TarExtract extends EventEmitter {
     }
 
     // Apply any pending GNU/PAX extensions to this entry
-    this._applyExtensions(header);
+    applyExtensions(header, this.extState);
 
     // Set up for file data
     this.entryRemaining = header.size;
@@ -339,64 +364,13 @@ export default class TarExtract extends EventEmitter {
   }
 
   /**
-   * Apply pending GNU/PAX extensions to a header
-   */
-  private _applyExtensions(header: TarHeader): void {
-    // Apply PAX global header first
-    if (this.paxGlobal) {
-      this._applyPaxToHeader(header, this.paxGlobal);
-    }
-
-    // Apply PAX header (per-entry, overrides global)
-    if (this.paxHeader) {
-      this._applyPaxToHeader(header, this.paxHeader);
-      header.pax = this.paxHeader;
-      this.paxHeader = null;
-    }
-
-    // Apply GNU long path (overrides PAX path)
-    if (this.gnuLongPath !== null) {
-      header.name = this.gnuLongPath;
-      this.gnuLongPath = null;
-    }
-
-    // Apply GNU long link (overrides PAX linkpath)
-    if (this.gnuLongLink !== null) {
-      header.linkname = this.gnuLongLink;
-      this.gnuLongLink = null;
-    }
-
-    // Handle old tar versions that use trailing / to indicate directories
-    // This check is done AFTER extensions are applied so we use the final
-    // resolved name (GNU long path or PAX path), not the truncated name field.
-    // This fixes a bug where files with >100 char paths were misclassified
-    // as directories when the truncated 100-char name happened to end with '/'.
-    if (header.type === 'file' && header.name && header.name[header.name.length - 1] === '/') {
-      header.type = 'directory';
-    }
-  }
-
-  /**
-   * Apply PAX attributes to header
-   */
-  private _applyPaxToHeader(header: TarHeader, pax: Record<string, string>): void {
-    if (pax.path) header.name = pax.path;
-    if (pax.linkpath) header.linkname = pax.linkpath;
-    if (pax.size) header.size = parseInt(pax.size, 10);
-    if (pax.uid) header.uid = parseInt(pax.uid, 10);
-    if (pax.gid) header.gid = parseInt(pax.gid, 10);
-    if (pax.uname) header.uname = pax.uname;
-    if (pax.gname) header.gname = pax.gname;
-    if (pax.mtime) header.mtime = new Date(parseFloat(pax.mtime) * 1000);
-  }
-
-  /**
    * Process extension data (GNU long path/link, PAX headers)
    */
   private _processExtensionData(): boolean {
-    if (this.extensionRemaining <= 0) {
+    if (this.extState.extensionRemaining <= 0) {
       // Done collecting extension data - decode and store
-      this._finalizeExtension();
+      const encoding = this.options.filenameEncoding || 'utf8';
+      finalizeExtension(this.extState, this.state, this.header, encoding);
       this.state = this.paddingRemaining > 0 ? STATE_PADDING : STATE_HEADER;
       return true;
     }
@@ -406,68 +380,19 @@ export default class TarExtract extends EventEmitter {
     }
 
     // Read as much as we can
-    const toRead = Math.min(this.extensionRemaining, this.buffer.length);
+    const toRead = Math.min(this.extState.extensionRemaining, this.buffer.length);
     const data = this.buffer.consume(toRead);
-    this.extensionRemaining -= toRead;
-    this.extensionData.push(data);
+    this.extState.extensionRemaining -= toRead;
+    this.extState.extensionData.push(data);
 
     // Check if done
-    if (this.extensionRemaining <= 0) {
-      this._finalizeExtension();
+    if (this.extState.extensionRemaining <= 0) {
+      const encoding = this.options.filenameEncoding || 'utf8';
+      finalizeExtension(this.extState, this.state, this.header, encoding);
       this.state = this.paddingRemaining > 0 ? STATE_PADDING : STATE_HEADER;
     }
 
     return true;
-  }
-
-  /**
-   * Finalize extension data collection
-   */
-  private _finalizeExtension(): void {
-    // Concatenate all collected data
-    const totalLength = this.extensionData.reduce((sum, buf) => sum + buf.length, 0);
-    const combined = Buffer.concat ? Buffer.concat(this.extensionData, totalLength) : this._concatBuffers(this.extensionData, totalLength);
-    this.extensionData = [];
-
-    const encoding = this.options.filenameEncoding || 'utf8';
-
-    switch (this.state) {
-      case STATE_GNU_LONG_PATH:
-        this.gnuLongPath = decodeLongPath(combined, encoding);
-        break;
-      case STATE_GNU_LONG_LINK:
-        this.gnuLongLink = decodeLongPath(combined, encoding);
-        break;
-      case STATE_PAX_HEADER:
-        // Check if this was a global header
-        if (this.header && this.header.type === 'pax-global-header') {
-          const global = decodePax(combined);
-          // Merge into global (don't replace, merge)
-          for (const key in global) {
-            // biome-ignore lint/suspicious/noPrototypeBuiltins: ES2021 compatibility
-            if (global.hasOwnProperty(key)) {
-              this.paxGlobal[key] = global[key];
-            }
-          }
-        } else {
-          this.paxHeader = decodePax(combined);
-        }
-        break;
-    }
-  }
-
-  /**
-   * Concatenate buffers (Node 0.8 compatible fallback)
-   */
-  private _concatBuffers(buffers: Buffer[], totalLength: number): Buffer {
-    const result = allocBufferUnsafe(totalLength);
-    let offset = 0;
-    for (let i = 0; i < buffers.length; i++) {
-      const buf = buffers[i];
-      buf.copy(result, offset);
-      offset += buf.length;
-    }
-    return result;
   }
 
   /**
