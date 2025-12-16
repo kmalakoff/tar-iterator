@@ -1,20 +1,12 @@
 import once from 'call-once-fn';
-import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
-import path from 'path';
+import { DirectoryEntry, LinkEntry, normalizePath, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.ts';
 import type Iterator from './TarIterator.ts';
 
 import type { Entry, EntryCallback } from './types.ts';
 
-// Node 0.8 compatible setImmediate (setImmediate was added in Node 0.10)
-const _setImmediate =
-  typeof setImmediate === 'function'
-    ? setImmediate
-    : typeof process !== 'undefined' && typeof process.nextTick === 'function'
-      ? process.nextTick
-      : function setImmediateFallback(fn: () => void) {
-          setTimeout(fn, 0);
-        };
+// setImmediate is preferred (Node 0.10+), falls back to setTimeout for Node 0.8
+const defer = typeof setImmediate === 'function' ? setImmediate : (fn: () => void) => setTimeout(fn, 0);
 
 export type TarNext = () => undefined;
 export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
@@ -38,7 +30,7 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
 
     // Use setImmediate to defer the callback invocation
     // This ensures proper async behavior with the BaseIterator
-    _setImmediate(() => {
+    defer(() => {
       err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
     });
   }) as NextCallback;
@@ -54,7 +46,7 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
     }
 
     const attributes = { ...header };
-    attributes.path = header.name.split(path.sep).filter(Boolean).join(path.sep);
+    attributes.path = normalizePath(header.name);
     attributes.mtime = new Date(attributes.mtime);
 
     switch (attributes.type) {
