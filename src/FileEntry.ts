@@ -1,8 +1,8 @@
-import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
+import once from 'call-once-fn';
+import { type FileAttributes, FileEntry, type Lock, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import fs from 'fs';
 import oo from 'on-one';
 
-import type Lock from './lib/Lock.ts';
 import type { ExtractOptions } from './types.ts';
 
 export default class TarFileEntry extends FileEntry {
@@ -44,14 +44,29 @@ export default class TarFileEntry extends FileEntry {
     }
 
     const stream = this.stream;
-    this.stream = null;
+    this.stream = null; // Prevent reuse
+
+    // Use once since errors can come from either stream
+    const cb = once((err?: Error) => {
+      err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occasionally
+    });
+
     try {
-      const res = stream.pipe(fs.createWriteStream(fullPath));
-      oo(res, ['error', 'end', 'close', 'finish'], (err?: Error) => {
-        err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occasionally
+      const writeStream = fs.createWriteStream(fullPath);
+
+      // Listen for errors on source stream (errors don't propagate through pipe)
+      stream.on('error', (err: Error) => {
+        // Destroy the write stream on source error
+        const ws = writeStream as fs.WriteStream & { destroy?: () => void };
+        if (typeof ws.destroy === 'function') ws.destroy();
+        cb(err);
       });
+
+      // Pipe and listen for write stream completion/errors
+      stream.pipe(writeStream);
+      oo(writeStream, ['error', 'end', 'close', 'finish'], cb);
     } catch (err) {
-      callback(err);
+      cb(err);
     }
   }
 

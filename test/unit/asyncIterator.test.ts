@@ -3,10 +3,17 @@ import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
-
 import TarIterator from 'tar-iterator';
-import { DATA_DIR, TARGET } from '../lib/constants.ts';
-import validateFiles from '../lib/validateFiles.ts';
+import url from 'url';
+
+import { getFixture } from '../lib/fixtures.ts';
+import getStats from '../lib/getStats.ts';
+
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
+const TARGET = path.join(TMP_DIR, 'target');
+
+const fixture = getFixture('fixture.tar');
 
 async function extract(iterator, dest, options) {
   const links = [];
@@ -18,6 +25,12 @@ async function extract(iterator, dest, options) {
 
   // create links then symlinks after directories and files
   for (const entry of links) await entry.create(dest, options);
+}
+
+async function verify(options) {
+  const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
+  const actual = await getStats(statsPath);
+  assert.deepEqual(actual, fixture.expected);
 }
 
 describe('asyncIterator', () => {
@@ -40,31 +53,35 @@ describe('asyncIterator', () => {
     });
   });
 
+  afterEach((callback) => {
+    safeRm(TARGET, callback);
+  });
+
   describe('happy path', () => {
     it('extract - no strip', async () => {
       const options = { now: new Date() };
-      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-      await validateFiles(options, 'tar');
+      await extract(new TarIterator(fixture.path), TARGET, options);
+      await verify(options);
     });
 
     it('extract - strip 1', async () => {
       const options = { now: new Date(), strip: 1 };
-      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-      await validateFiles(options, 'tar');
+      await extract(new TarIterator(fixture.path), TARGET, options);
+      await verify(options);
     });
 
     it('extract multiple times', async () => {
       const options = { now: new Date(), strip: 1 };
-      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
-      await validateFiles(options, 'tar');
+      await extract(new TarIterator(fixture.path), TARGET, options);
+      await verify(options);
       try {
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+        await extract(new TarIterator(fixture.path), TARGET, options);
         assert.ok(false);
       } catch (err) {
         assert.ok(err);
       }
-      await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, { force: true, ...options });
-      await validateFiles(options, 'tar');
+      await extract(new TarIterator(fixture.path), TARGET, { force: true, ...options });
+      await verify(options);
     });
   });
 
@@ -72,7 +89,7 @@ describe('asyncIterator', () => {
     it('should fail with too large strip', async () => {
       const options = { now: new Date(), strip: 2 };
       try {
-        await extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options);
+        await extract(new TarIterator(fixture.path), TARGET, options);
         assert.ok(false);
       } catch (err) {
         assert.ok(!!err);
