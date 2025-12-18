@@ -16,7 +16,10 @@ export default class TarFileEntry extends FileEntry {
     this.lock.retain();
   }
 
-  create(dest: string, options: ExtractOptions | NoParamCallback, callback: NoParamCallback): undefined | Promise<boolean> {
+  create(dest: string, callback: NoParamCallback): void;
+  create(dest: string, options: ExtractOptions, callback: NoParamCallback): void;
+  create(dest: string, options?: ExtractOptions): Promise<boolean>;
+  create(dest: string, options?: ExtractOptions | NoParamCallback, callback?: NoParamCallback): void | Promise<boolean> {
     if (typeof options === 'function') {
       callback = options;
       options = null;
@@ -33,11 +36,11 @@ export default class TarFileEntry extends FileEntry {
     }
 
     return new Promise((resolve, reject) => {
-      this.create(dest, options, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done)));
+      this.create(dest, options as ExtractOptions, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done)));
     });
   }
 
-  _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): undefined {
+  _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): void {
     if (!this.stream) {
       callback(new Error('FileEntry missing stream. Check for calling create multiple times'));
       return;
@@ -64,7 +67,7 @@ export default class TarFileEntry extends FileEntry {
 
       // Pipe and listen for write stream completion/errors
       stream.pipe(writeStream);
-      oo(writeStream, ['error', 'end', 'close', 'finish'], cb);
+      oo(writeStream, ['error', 'close', 'finish'], cb);
     } catch (err) {
       cb(err);
     }
