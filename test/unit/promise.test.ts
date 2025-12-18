@@ -22,7 +22,6 @@ const fixture = getFixture('fixture.tar');
 function extract(iterator, dest, options, callback) {
   const links = [];
   iterator
-    // biome-ignore lint/suspicious/useIterableCallbackReturn: Not an iterable
     .forEach(
       (entry) => {
         if (entry.type === 'link') links.unshift(entry);
@@ -88,7 +87,7 @@ describe('promise', () => {
     it('destroy entries', (done) => {
       const iterator = new TarIterator(fixture.path);
       iterator.forEach(
-        (entry): undefined => {
+        (entry): void => {
           entry.destroy();
         },
         (err) => {
