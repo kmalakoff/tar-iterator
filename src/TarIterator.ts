@@ -19,7 +19,7 @@ export default class TarIterator extends BaseIterator<Entry> {
     this.lock.onDestroy = (err) => BaseIterator.prototype.end.call(this, err);
 
     let cancelled = false;
-    const setup = (): undefined => {
+    const setup = (): void => {
       cancelled = true;
     };
     this.processing.push(setup);

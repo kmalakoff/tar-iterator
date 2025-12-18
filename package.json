@@ -62,13 +62,13 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.1",
-    "extract-base-iterator": "^2.6.1",
+    "extract-base-iterator": "^3.0.0",
     "on-one": "^1.0.0"
   },
   "devDependencies": {
     "@types/mocha": "*",
     "@types/node": "*",
-    "fs-iterator": "^6.1.12",
+    "fs-iterator": "^7.0.0",
     "fs-remove-compat": "^1.0.0",
     "fs-stats-spys": "^1.0.0",
     "get-file-compat": "^2.0.0",
@@ -79,7 +79,7 @@
     "through": "^2.1.0",
     "ts-dev-stack": "*",
     "tsds-config": "*",
-    "unbzip2-stream": "^1.4.3"
+    "unbzip2-stream": "1.4.3"
   },
   "engines": {
     "node": ">=0.8"
