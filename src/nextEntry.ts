@@ -5,13 +5,10 @@ import type Iterator from './TarIterator.ts';
 
 import type { Entry, EntryCallback } from './types.ts';
 
-// setImmediate is preferred (Node 0.10+), falls back to setTimeout for Node 0.8
-const defer = typeof setImmediate === 'function' ? setImmediate : (fn: () => void) => setTimeout(fn, 0);
+export type TarNext = () => void;
+export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => void;
 
-export type TarNext = () => undefined;
-export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
-
-export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): undefined {
+export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): void {
   // Guard: bail early if iterator already ended
   if (!iterator.lock || iterator.isDone()) {
     return callback(null, { done: true, value: null });
@@ -28,11 +25,10 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
     // keep processing
     if (entry) iterator.push(nextEntry.bind(null, next));
 
-    // Use setImmediate to defer the callback invocation
-    // This ensures proper async behavior with the BaseIterator
-    defer(() => {
+    // Defer the callback invocation to ensure proper async behavior with the BaseIterator
+    setTimeout(() => {
       err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
-    });
+    }, 0);
   }) as NextCallback;
 
   // Use nextCallback for all events to ensure once() wrapper is respected

@@ -7,18 +7,15 @@ export interface Stats {
   links: number;
 }
 
-export default function getStats(dir: string, callback?: (err: Error | null, stats?: Stats) => void): undefined | Promise<Stats> {
+export default function getStats(dir: string, callback?: (err: Error | null, stats?: Stats) => void): void | Promise<Stats> {
   if (typeof callback === 'function') {
     const spys = statsSpys();
     new Iterator(dir, { lstat: true }).forEach(
-      (entry): undefined => {
+      (entry): void => {
         spys(entry.stats);
       },
-      (err): undefined => {
-        if (err) {
-          callback(err);
-          return;
-        }
+      (err): void => {
+        if (err) return callback(err);
         callback(null, {
           dirs: spys.dir.callCount,
           files: spys.file.callCount,

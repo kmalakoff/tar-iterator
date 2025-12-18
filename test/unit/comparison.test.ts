@@ -14,7 +14,8 @@ import { rmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
-import TarIterator, { type SymbolicLinkEntry } from 'tar-iterator';
+import Queue from 'queue-cb';
+import TarIterator, { type Entry } from 'tar-iterator';
 import url from 'url';
 import zlib from 'zlib';
 
@@ -48,7 +49,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   const iterator = new Iterator(dirPath, { alwaysStat: true, lstat: true });
 
   iterator.forEach(
-    (entry): undefined => {
+    (entry): void => {
       // entry.path is already relative to dirPath
       stats[entry.path] = {
         size: entry.stats.size,
@@ -77,232 +78,133 @@ function removeDir(dirPath: string): void {
   }
 }
 
+/**
+ * Check if a native tool is available
+ */
+function checkToolAvailable(checkCmd: string, callback: (available: boolean) => void): void {
+  execCallback(checkCmd, (err) => {
+    callback(!err);
+  });
+}
+
+/**
+ * Extract using tar-iterator with entry.create() API
+ */
+function extractWithTarIterator(cachePath: string, destDir: string, options: { now: Date; strip: number }, callback: (err?: Error) => void): void {
+  const source = fs.createReadStream(cachePath).pipe(zlib.createUnzip());
+  const iterator = new TarIterator(source);
+  const links: Entry[] = [];
+
+  iterator.forEach(
+    (entry, cb): void => {
+      if (entry.type === 'link') {
+        links.unshift(entry); // Hard links first
+        cb();
+      } else if (entry.type === 'symlink') {
+        links.push(entry); // Symlinks after hard links
+        cb();
+      } else {
+        entry.create(destDir, options, (err) => {
+          cb(err || undefined);
+        });
+      }
+    },
+    { callbacks: true },
+    (err): void => {
+      if (err) return callback(err);
+
+      // Process links after files/directories (hard links first, then symlinks)
+      const queue = new Queue(1);
+      for (let i = 0; i < links.length; i++) {
+        queue.defer(links[i].create.bind(links[i], destDir, options));
+      }
+      queue.await(callback);
+    }
+  );
+}
+
 describe('Comparison - tar-iterator vs native tar', () => {
+  let toolAvailable = false;
+
   before(function (done) {
     // Increase timeout for this test (downloading and extracting large archive)
     this.timeout(120000);
 
-    // Ensure .cache directory exists
-    if (!fs.existsSync(CACHE_DIR)) {
-      mkdirp.sync(CACHE_DIR);
-    }
+    // Check if native tar is available
+    checkToolAvailable('which tar', (available) => {
+      toolAvailable = available;
+      if (!available) {
+        console.log('    Skipping tar comparison tests - native tar not available');
+        done();
+        return;
+      }
 
-    // Download tar file if it doesn't exist
-    if (!fs.existsSync(CACHE_PATH)) {
-      console.log(`Downloading ${TAR_URL}...`);
-      getFile(TAR_URL, CACHE_PATH, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
-        console.log('Download complete');
+      // Ensure directories exist
+      if (!fs.existsSync(CACHE_DIR)) {
+        mkdirp.sync(CACHE_DIR);
+      }
+      if (!fs.existsSync(TMP_DIR)) {
+        mkdirp.sync(TMP_DIR);
+      }
 
-        // Clean up previous extractions
-        removeDir(TAR_EXTRACT_DIR);
-        removeDir(TAR_ITERATOR_EXTRACT_DIR);
-
-        // Extract with native tar
-        console.log('Extracting with native tar...');
-        execCallback(`cd ${TMP_DIR} && tar -xzf ${CACHE_PATH}`, (err) => {
+      // Download tar file if it doesn't exist
+      if (!fs.existsSync(CACHE_PATH)) {
+        console.log(`Downloading ${TAR_URL}...`);
+        getFile(TAR_URL, CACHE_PATH, (err) => {
           if (err) {
             done(err);
             return;
           }
-
-          // Find the extracted directory (should be node-v24.12.0-linux-x64)
-          const tarDir = path.join(TMP_DIR, 'node-v24.12.0-linux-x64');
-          assert.ok(fs.existsSync(tarDir), 'Native tar should create node-v24.12.0-linux-x64 directory');
-
-          // Rename it to TAR_EXTRACT_DIR
-          fs.renameSync(tarDir, TAR_EXTRACT_DIR);
-
-          // Extract with tar-iterator
-          console.log('Extracting with tar-iterator...');
-          const source = fs.createReadStream(CACHE_PATH).pipe(zlib.createUnzip());
-          const iterator = new TarIterator(source);
-          const options = { now: new Date(), strip: 1 };
-
-          iterator.forEach(
-            (entry, callback): undefined => {
-              // Strip the base directory prefix (node-v24.12.0-linux-x64/) to match native tar behavior
-              // Handle both "node-v24.12.0-linux-x64" and "node-v24.12.0-linux-x64/"
-              const relativePath = entry.path.replace(/^node-v24\.12\.0-linux-x64\/?/, '');
-
-              // Skip if the entry is the root directory itself (empty path after stripping)
-              if (!relativePath) {
-                entry.destroy();
-                callback();
-                return;
-              }
-
-              if (entry.type === 'directory') {
-                // Ensure directory exists
-                const destPath = path.join(TAR_ITERATOR_EXTRACT_DIR, relativePath);
-                mkdirp.sync(destPath, { recursive: true });
-                if (entry.mode) {
-                  fs.chmodSync(destPath, entry.mode);
-                }
-                entry.destroy();
-                callback();
-              } else if (entry.type === 'file') {
-                // Use entry.create() for simpler extraction
-                entry.create(TAR_ITERATOR_EXTRACT_DIR, options, (err) => {
-                  if (err) {
-                    entry.destroy();
-                    callback(err);
-                  } else {
-                    entry.destroy();
-                    callback();
-                  }
-                });
-              } else if (entry.type === 'symlink') {
-                const symlinkEntry = entry as SymbolicLinkEntry;
-                // Ensure parent directory exists
-                const destPath = path.join(TAR_ITERATOR_EXTRACT_DIR, relativePath);
-                mkdirp.sync(path.dirname(destPath), { recursive: true });
-
-                // Create symlink
-                if (symlinkEntry.linkpath) {
-                  try {
-                    fs.symlinkSync(symlinkEntry.linkpath, destPath);
-                  } catch (err) {
-                    // Ignore errors if symlink already exists or path is invalid
-                    if (err.code !== 'EEXIST') {
-                      // For non-critical errors, just log and continue
-                      console.warn(`Warning: Failed to create symlink ${destPath}: ${err.message}`);
-                    }
-                  }
-                }
-                entry.destroy();
-                callback();
-              } else if (entry.type === 'link') {
-                // Hard link - not critical for comparison
-                entry.destroy();
-                callback();
-              } else {
-                // Skip other types
-                entry.destroy();
-                callback();
-              }
-            },
-            { callbacks: true },
-            (err): undefined => {
-              if (err) {
-                done(err);
-              } else {
-                console.log('Both extractions complete');
-                done();
-              }
-            }
-          );
+          console.log('Download complete');
+          performExtractions(done);
         });
-      });
-    } else {
-      console.log('Using cached tar file');
+      } else {
+        console.log('Using cached tar file');
+        performExtractions(done);
+      }
+    });
 
+    function performExtractions(callback: (err?: Error) => void): void {
       // Clean up previous extractions
       removeDir(TAR_EXTRACT_DIR);
       removeDir(TAR_ITERATOR_EXTRACT_DIR);
 
       // Extract with native tar
       console.log('Extracting with native tar...');
-      execCallback(`cd ${TMP_DIR} && tar -xzf ${CACHE_PATH}`, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
+      execCallback(`cd "${TMP_DIR}" && tar -xzf "${CACHE_PATH}"`, (err) => {
+        if (err) return callback(err);
 
         // Find the extracted directory (should be node-v24.12.0-linux-x64)
         const tarDir = path.join(TMP_DIR, 'node-v24.12.0-linux-x64');
-        assert.ok(fs.existsSync(tarDir), 'Native tar should create node-v24.12.0-linux-x64 directory');
+        if (!fs.existsSync(tarDir)) {
+          callback(new Error('Native tar should create node-v24.12.0-linux-x64 directory'));
+          return;
+        }
 
         // Rename it to TAR_EXTRACT_DIR
         fs.renameSync(tarDir, TAR_EXTRACT_DIR);
 
         // Extract with tar-iterator
         console.log('Extracting with tar-iterator...');
-        const source = fs.createReadStream(CACHE_PATH).pipe(zlib.createUnzip());
-        const iterator = new TarIterator(source);
         const options = { now: new Date(), strip: 1 };
-
-        iterator.forEach(
-          (entry, callback): undefined => {
-            // Strip the base directory prefix (node-v24.12.0-linux-x64/) to match native tar behavior
-            // Handle both "node-v24.12.0-linux-x64" and "node-v24.12.0-linux-x64/"
-            const relativePath = entry.path.replace(/^node-v24\.12\.0-linux-x64\/?/, '');
-
-            // Skip if the entry is the root directory itself (empty path after stripping)
-            if (!relativePath) {
-              entry.destroy();
-              callback();
-              return;
-            }
-
-            if (entry.type === 'directory') {
-              // Ensure directory exists
-              const destPath = path.join(TAR_ITERATOR_EXTRACT_DIR, relativePath);
-              mkdirp.sync(destPath, { recursive: true });
-              if (entry.mode) {
-                fs.chmodSync(destPath, entry.mode);
-              }
-              entry.destroy();
-              callback();
-            } else if (entry.type === 'file') {
-              // Use entry.create() for simpler extraction
-              entry.create(TAR_ITERATOR_EXTRACT_DIR, options, (err) => {
-                if (err) {
-                  entry.destroy();
-                  callback(err);
-                } else {
-                  entry.destroy();
-                  callback();
-                }
-              });
-            } else if (entry.type === 'symlink') {
-              const symlinkEntry = entry as SymbolicLinkEntry;
-              // Ensure parent directory exists
-              const destPath = path.join(TAR_ITERATOR_EXTRACT_DIR, relativePath);
-              mkdirp.sync(path.dirname(destPath), { recursive: true });
-
-              // Create symlink
-              if (symlinkEntry.linkpath) {
-                try {
-                  fs.symlinkSync(symlinkEntry.linkpath, destPath);
-                } catch (err) {
-                  // Ignore errors if symlink already exists or path is invalid
-                  if (err.code !== 'EEXIST') {
-                    // For non-critical errors, just log and continue
-                    console.warn(`Warning: Failed to create symlink ${destPath}: ${err.message}`);
-                  }
-                }
-              }
-              entry.destroy();
-              callback();
-            } else if (entry.type === 'link') {
-              // Hard link - not critical for comparison
-              entry.destroy();
-              callback();
-            } else {
-              // Skip other types
-              entry.destroy();
-              callback();
-            }
-          },
-          { callbacks: true },
-          (err): undefined => {
-            if (err) {
-              done(err);
-            } else {
-              console.log('Both extractions complete');
-              done();
-            }
+        extractWithTarIterator(CACHE_PATH, TAR_ITERATOR_EXTRACT_DIR, options, (err) => {
+          if (err) {
+            callback(err);
+          } else {
+            console.log('Both extractions complete');
+            callback();
           }
-        );
+        });
       });
     }
   });
 
-  it('should produce identical extraction results', (done) => {
+  it('should produce identical extraction results', function (done) {
+    if (!toolAvailable) {
+      this.skip();
+      return;
+    }
+
     // Collect stats from both directories
     console.log('Collecting stats from native tar extraction...');
     collectStats(TAR_EXTRACT_DIR, (err, statsTar) => {

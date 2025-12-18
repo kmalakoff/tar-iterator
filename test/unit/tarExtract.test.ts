@@ -56,7 +56,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
   const entries: Entry[] = [];
 
   iterator.forEach(
-    (entry): undefined => {
+    (entry): void => {
       entries.push({
         path: entry.path,
         type: entry.type,
@@ -69,7 +69,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
       });
       entry.destroy();
     },
-    (err): undefined => {
+    (err): void => {
       if (err) return callback(err) as undefined;
       callback(null, entries);
     }
@@ -190,7 +190,7 @@ describe('TarExtract - Format Support', () => {
       const entries: Entry[] = [];
 
       iterator.forEach(
-        (entry): undefined => {
+        (entry): void => {
           entries.push({
             path: entry.path,
             type: entry.type,
@@ -198,7 +198,7 @@ describe('TarExtract - Format Support', () => {
           });
           entry.destroy();
         },
-        (err): undefined => {
+        (err): void => {
           if (err) return done(err) as undefined;
 
           // GitHub archives have PAX global headers - verify extraction works
@@ -255,7 +255,7 @@ describe('TarExtract - Format Support', () => {
       const iterator = new TarIterator(tarPath);
 
       iterator.forEach(
-        (entry): undefined => {
+        (entry): void => {
           entry.destroy();
         },
         (err) => {
@@ -417,7 +417,7 @@ describe('TarExtract - Error Handling', () => {
     const iterator = new TarIterator(corruptedTarPath);
 
     iterator.forEach(
-      (entry): undefined => {
+      (entry): void => {
         entry.destroy();
       },
       (err) => {
@@ -489,7 +489,7 @@ describe('TarExtract - File Content', () => {
     const extractPath = path.join(TMP_DIR, 'gnu-content-test');
 
     iterator.forEach(
-      (entry, callback): undefined => {
+      (entry, callback): void => {
         if (entry.path === 'test.txt' && entry.type === 'file') {
           // Extract file using the proper create() API
           entry.create(extractPath, { force: true }, (err?: Error) => {
@@ -508,7 +508,7 @@ describe('TarExtract - File Content', () => {
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err): undefined => {
+      (err): void => {
         if (err) return done(err) as undefined;
         // Verify we actually read the expected content
         assert.strictEqual(contentRead, 'Hello, world!\n', 'File content should match expected value');
@@ -526,7 +526,7 @@ describe('TarExtract - Compression', () => {
     const entries: Entry[] = [];
 
     iterator.forEach(
-      (entry): undefined => {
+      (entry): void => {
         entries.push({
           path: entry.path,
           type: entry.type,
@@ -534,7 +534,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err): undefined => {
+      (err): void => {
         if (err) return done(err) as undefined;
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -558,7 +558,7 @@ describe('TarExtract - Compression', () => {
     const entries: Entry[] = [];
 
     iterator.forEach(
-      (entry): undefined => {
+      (entry): void => {
         entries.push({
           path: entry.path,
           type: entry.type,
@@ -566,7 +566,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err): undefined => {
+      (err): void => {
         if (err) return done(err) as undefined;
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -595,7 +595,7 @@ describe('TarExtract - GNU Sparse Files', () => {
     const extractPath = path.join(TMP_DIR, 'sparse-test');
 
     iterator.forEach(
-      (entry, callback): undefined => {
+      (entry, callback): void => {
         assert.strictEqual(entry.path, 'sparse-test.txt', 'Should have correct filename');
         assert.strictEqual(entry.type, 'file', 'Should report type as file (not gnu-sparse)');
         assert.strictEqual((entry as unknown as Entry).size, 1024, 'Should report reconstructed file size');
@@ -634,7 +634,7 @@ describe('TarExtract - GNU Sparse Files', () => {
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err): undefined => {
+      (err): void => {
         if (err) return done(err) as undefined;
         done();
       }
