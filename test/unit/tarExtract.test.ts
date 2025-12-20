@@ -70,7 +70,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
       entry.destroy();
     },
     (err): void => {
-      if (err) return callback(err) as undefined;
+      if (err) return callback(err);
       callback(null, entries);
     }
   );
@@ -199,7 +199,7 @@ describe('TarExtract - Format Support', () => {
           entry.destroy();
         },
         (err): void => {
-          if (err) return done(err) as undefined;
+          if (err) return done(err);
 
           // GitHub archives have PAX global headers - verify extraction works
           assert.ok(entries.length > 30, 'Should have many entries (GitHub archive)');
@@ -509,7 +509,7 @@ describe('TarExtract - File Content', () => {
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
       (err): void => {
-        if (err) return done(err) as undefined;
+        if (err) return done(err);
         // Verify we actually read the expected content
         assert.strictEqual(contentRead, 'Hello, world!\n', 'File content should match expected value');
         done();
@@ -535,7 +535,7 @@ describe('TarExtract - Compression', () => {
         entry.destroy();
       },
       (err): void => {
-        if (err) return done(err) as undefined;
+        if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
         assert.ok(
@@ -567,7 +567,7 @@ describe('TarExtract - Compression', () => {
         entry.destroy();
       },
       (err): void => {
-        if (err) return done(err) as undefined;
+        if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
         assert.ok(
@@ -635,7 +635,7 @@ describe('TarExtract - GNU Sparse Files', () => {
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
       (err): void => {
-        if (err) return done(err) as undefined;
+        if (err) return done(err);
         done();
       }
     );
