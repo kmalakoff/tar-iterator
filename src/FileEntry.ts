@@ -20,12 +20,10 @@ export default class TarFileEntry extends FileEntry {
   create(dest: string, options: ExtractOptions, callback: NoParamCallback): void;
   create(dest: string, options?: ExtractOptions): Promise<boolean>;
   create(dest: string, options?: ExtractOptions | NoParamCallback, callback?: NoParamCallback): void | Promise<boolean> {
-    if (typeof options === 'function') {
-      callback = options;
-      options = null;
-    }
+    callback = typeof options === 'function' ? options : callback;
+    options = typeof options === 'function' ? {} : ((options || {}) as ExtractOptions);
+
     if (typeof callback === 'function') {
-      options = options || {};
       return FileEntry.prototype.create.call(this, dest, options, (err?: Error) => {
         callback(err);
         if (this.lock) {
@@ -35,9 +33,7 @@ export default class TarFileEntry extends FileEntry {
       });
     }
 
-    return new Promise((resolve, reject) => {
-      this.create(dest, options as ExtractOptions, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done)));
-    });
+    return new Promise((resolve, reject) => this.create(dest, options, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done))));
   }
 
   _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): void {
@@ -58,11 +54,17 @@ export default class TarFileEntry extends FileEntry {
       const writeStream = fs.createWriteStream(fullPath);
 
       // Listen for errors on source stream (errors don't propagate through pipe)
-      stream.on('error', (err: Error) => {
-        // Destroy the write stream on source error
+      stream.on('error', (streamErr: Error) => {
+        // Destroy the write stream on source error.
+        // On Node 0.8, destroy() emits 'close' before 'error'. Since on-one is listening
+        // for ['error', 'close', 'finish'], it catches 'close' first, calls our callback,
+        // and removes ALL listeners - including the 'error' listener. The subsequent EBADF
+        // error then fires with no handler, causing an uncaught exception.
+        // Adding a no-op error handler ensures there's always a listener for any error.
         const ws = writeStream as fs.WriteStream & { destroy?: () => void };
+        writeStream.on('error', () => {});
         if (typeof ws.destroy === 'function') ws.destroy();
-        cb(err);
+        cb(streamErr);
       });
 
       // Pipe and listen for write stream completion/errors
