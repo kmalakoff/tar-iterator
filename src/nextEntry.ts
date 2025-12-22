@@ -25,10 +25,10 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
     // keep processing
     if (entry) iterator.push(nextEntry.bind(null, next));
 
-    // Defer the callback invocation to ensure proper async behavior with the BaseIterator
-    setTimeout(() => {
+    // Avoid Zalgo: ensure callback is always async even when entry is available synchronously
+    process.nextTick(() => {
       err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
-    }, 0);
+    });
   }) as NextCallback;
 
   // Use nextCallback for all events to ensure once() wrapper is respected
