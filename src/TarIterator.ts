@@ -1,6 +1,6 @@
 import once from 'call-once-fn';
 import BaseIterator, { Lock } from 'extract-base-iterator';
-import fs from 'fs';
+import fs from 'graceful-fs';
 
 import nextEntry from './nextEntry.ts';
 import TarExtract from './tar/TarExtract.ts';
