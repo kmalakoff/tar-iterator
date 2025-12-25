@@ -63,6 +63,7 @@
   "dependencies": {
     "call-once-fn": "^1.0.1",
     "extract-base-iterator": "^3.0.0",
+    "graceful-fs": "^4.2.11",
     "on-one": "^1.0.0"
   },
   "devDependencies": {
