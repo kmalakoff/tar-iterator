@@ -23,12 +23,8 @@ export default function getStats(dir: string, callback?: (err: Error | null, sta
         });
       }
     );
-  } else {
-    return new Promise((resolve, reject) => {
-      getStats(dir, (err, stats) => {
-        if (err) reject(err);
-        else resolve(stats as Stats);
-      });
-    });
+    return;
   }
+
+  return new Promise((resolve, reject) => getStats(dir, (err, stats) => (err ? reject(err) : resolve(stats as Stats))));
 }
