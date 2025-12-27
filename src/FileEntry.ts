@@ -24,13 +24,14 @@ export default class TarFileEntry extends FileEntry {
     options = typeof options === 'function' ? {} : ((options || {}) as ExtractOptions);
 
     if (typeof callback === 'function') {
-      return FileEntry.prototype.create.call(this, dest, options, (err?: Error) => {
+      FileEntry.prototype.create.call(this, dest, options, (err?: Error) => {
         callback(err);
         if (this.lock) {
           this.lock.release();
           this.lock = null;
         }
       });
+      return;
     }
 
     return new Promise((resolve, reject) => this.create(dest, options, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done))));
