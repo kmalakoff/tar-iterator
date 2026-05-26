@@ -1,3 +1,4 @@
+import type { Entry } from 'fs-iterator';
 import Iterator from 'fs-iterator';
 import statsSpys from 'fs-stats-spys';
 
@@ -11,8 +12,8 @@ export default function getStats(dir: string, callback?: (err: Error | null, sta
   if (typeof callback === 'function') {
     const spys = statsSpys();
     new Iterator(dir, { lstat: true }).forEach(
-      (entry): void => {
-        spys(entry.stats);
+      (entry: Entry): void => {
+        if (entry.stats) spys(entry.stats);
       },
       (err): void => {
         if (err) return callback(err);

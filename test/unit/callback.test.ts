@@ -4,6 +4,7 @@ import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
+import type { Entry, ExtractOptions } from 'tar-iterator';
 import TarIterator from 'tar-iterator';
 import url from 'url';
 import zlib from 'zlib';
@@ -18,20 +19,20 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.tar');
 
-function extract(iterator, dest, options, callback) {
-  const links = [];
+function extract(iterator: TarIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+  const links: Entry[] = [];
   iterator.forEach(
-    (entry, callback) => {
+    (entry: Entry, cb: (err?: Error, done?: boolean) => void) => {
       if (entry.type === 'link') {
         links.unshift(entry);
-        callback();
+        cb();
       } else if (entry.type === 'symlink') {
         links.push(entry);
-        callback();
-      } else entry.create(dest, options, callback);
+        cb();
+      } else entry.create(dest, options, cb);
     },
     { callbacks: true, concurrency: options.concurrency },
-    (err) => {
+    (err?: Error) => {
       if (err) return callback(err);
 
       // create links after directories and files
@@ -45,7 +46,7 @@ function extract(iterator, dest, options, callback) {
   );
 }
 
-function verify(options, callback) {
+function verify(options: { strip?: number; [key: string]: unknown }, callback: (err?: Error) => void) {
   // When strip is used, files are extracted directly to TARGET
   // Otherwise they're in TARGET/data (the archive's root directory)
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
@@ -77,14 +78,12 @@ describe('callback', () => {
     it('destroy entries', (done) => {
       const iterator = new TarIterator(fixture.path);
       iterator.forEach(
-        (entry): void => {
+        (entry: Entry): void => {
           entry.destroy();
         },
-        (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+        (err?: Error) => {
+          if (err) return done(err);
+
           assert.ok(!iterator.extract);
           done();
         }
