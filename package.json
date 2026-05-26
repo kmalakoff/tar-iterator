@@ -67,8 +67,11 @@
     "on-one": "^1.0.0"
   },
   "devDependencies": {
+    "@types/graceful-fs": "^4.1.9",
     "@types/mocha": "*",
     "@types/node": "*",
+    "@types/through": "^0.0.33",
+    "cross-spawn-cb": "^3.2.1",
     "fs-iterator": "^7.0.0",
     "fs-remove-compat": "^1.0.0",
     "fs-stats-spys": "^1.0.0",

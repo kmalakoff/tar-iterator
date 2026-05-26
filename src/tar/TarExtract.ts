@@ -370,7 +370,7 @@ export default class TarExtract extends EventEmitter {
     if (this.extState.extensionRemaining <= 0) {
       // Done collecting extension data - decode and store
       const encoding = this.options.filenameEncoding || 'utf8';
-      finalizeExtension(this.extState, this.state, this.header, encoding);
+      finalizeExtension(this.extState, this.state, this.header as unknown as { type: string } | null, encoding);
       this.state = this.paddingRemaining > 0 ? STATE_PADDING : STATE_HEADER;
       return true;
     }
@@ -388,7 +388,7 @@ export default class TarExtract extends EventEmitter {
     // Check if done
     if (this.extState.extensionRemaining <= 0) {
       const encoding = this.options.filenameEncoding || 'utf8';
-      finalizeExtension(this.extState, this.state, this.header, encoding);
+      finalizeExtension(this.extState, this.state, this.header as unknown as { type: string } | null, encoding);
       this.state = this.paddingRemaining > 0 ? STATE_PADDING : STATE_HEADER;
     }
 

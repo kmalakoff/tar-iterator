@@ -79,7 +79,7 @@ export default function unbzip2Stream(): NodeJS.ReadWriteStream {
       if (bitReader === null) {
         bitReader = bitIterator(() => bufferQueue.shift());
       }
-      while (!broken && hasBytes - bitReader.bytesRead + 1 >= (25000 + 100000 * blockSize || 4)) {
+      while (!broken && bitReader && hasBytes - bitReader.bytesRead + 1 >= (25000 + 100000 * blockSize || 4)) {
         decompressAndQueue(this);
       }
     },

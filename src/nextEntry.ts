@@ -1,7 +1,9 @@
+import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
-import { DirectoryEntry, LinkEntry, normalizePath, SymbolicLinkEntry } from 'extract-base-iterator';
+import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, type Lock, normalizePath, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.ts';
 import type Iterator from './TarIterator.ts';
+import type { TarHeader } from './tar/headers.ts';
 
 import type { Entry, EntryCallback } from './types.ts';
 
@@ -9,73 +11,65 @@ export type TarNext = () => void;
 export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => void;
 
 export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): void {
-  // Guard: bail early if iterator already ended
   if (!iterator.lock || iterator.isDone()) {
-    return callback(null, { done: true, value: null });
+    return callback(undefined, { done: true, value: undefined as unknown as Entry });
   }
 
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
-  const nextCallback = once((err?: Error, entry?: Entry, next?: TarNext) => {
+  const nextCallback = once(((err?: Error, entry?: Entry, next?: TarNext) => {
     extract.removeListener('entry', onEntry);
     extract.removeListener('error', onError);
     extract.removeListener('finish', onEnd);
 
-    // keep processing
-    if (entry) iterator.push(nextEntry.bind(null, next));
+    if (entry) iterator.push(nextEntry.bind(null, next as TarNext) as unknown as Parameters<typeof iterator.push>[0]);
 
-    // Avoid Zalgo: ensure callback is always async even when entry is available synchronously
     process.nextTick(() => {
-      err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
+      err ? callback(err) : callback(undefined, entry ? { done: false, value: entry } : { done: true, value: undefined as unknown as Entry });
     });
-  }) as NextCallback;
+  }) as unknown as CallFn) as unknown as NextCallback;
 
-  // Use nextCallback for all events to ensure once() wrapper is respected
   const onError = (err: Error) => nextCallback(err);
   const onEnd = () => nextCallback();
-  const onEntry = function onEntry(header, stream, next: TarNext) {
-    // Guard: skip if iterator already ended (stale lock)
+  const onEntry = function onEntry(header: TarHeader, stream: NodeJS.ReadableStream, next: TarNext) {
     if (!iterator.lock || iterator.isDone()) {
-      stream.resume(); // drain stream
-      return nextCallback(null, null, next);
+      stream.resume();
+      return nextCallback(undefined, undefined, next);
     }
 
-    const attributes = { ...header };
-    attributes.path = normalizePath(header.name);
-    attributes.mtime = new Date(attributes.mtime);
+    const entryPath = normalizePath(header.name);
+    const mtime = +header.mtime;
+    const mode = header.mode;
 
-    switch (attributes.type) {
+    switch (header.type) {
       case 'directory':
-        stream.resume(); // drain stream
-        return nextCallback(null, new DirectoryEntry(attributes), next);
-      case 'symlink':
-        stream.resume(); // drain stream
-        attributes.linkpath = header.linkname;
-        return nextCallback(null, new SymbolicLinkEntry(attributes), next);
-      case 'link':
-        stream.resume(); // drain stream
-        attributes.linkpath = header.linkname;
-        return nextCallback(null, new LinkEntry(attributes), next);
-      case 'file':
-        return nextCallback(null, new FileEntry(attributes, stream, iterator.lock), next);
+        stream.resume();
+        return nextCallback(undefined, new DirectoryEntry({ ...header, mode, mtime: header.mtime, path: entryPath } as unknown as DirectoryAttributes), next);
+      case 'symlink': {
+        stream.resume();
+        return nextCallback(undefined, new SymbolicLinkEntry({ ...header, mode, mtime, path: entryPath, linkpath: header.linkname ?? '' } as unknown as LinkAttributes), next);
+      }
+      case 'link': {
+        stream.resume();
+        return nextCallback(undefined, new LinkEntry({ ...header, mode, mtime, path: entryPath, linkpath: header.linkname ?? '' } as unknown as LinkAttributes), next);
+      }
+      case 'file': {
+        return nextCallback(undefined, new FileEntry({ ...header, mode, mtime, path: entryPath } as unknown as FileAttributes, stream, iterator.lock as Lock), next);
+      }
     }
 
-    stream.resume(); // drain stream
-    return nextCallback(new Error(`Unrecognized entry type: ${attributes.type}`), null, next);
+    stream.resume();
+    return nextCallback(new Error(`Unrecognized entry type: ${header.type}`), undefined, next);
   };
 
-  extract.on('entry', onEntry);
+  extract.on('entry', onEntry as (...args: unknown[]) => void);
   extract.on('error', onError);
   extract.on('finish', onEnd);
 
-  // Resume parsing to emit any pending entry
-  // For first call (next is null), this triggers the first entry emission
-  // For subsequent calls, next() unlocks the parser which then processes the next header
   if (next) {
     next();
   } else {
-    // First call - resume to emit any pending entry
     extract.resume();
   }
 }

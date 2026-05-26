@@ -28,6 +28,7 @@ import assert from 'assert';
 import { allocBuffer } from 'extract-base-iterator';
 import fs from 'fs';
 import path from 'path';
+import type { Entry as TarEntry } from 'tar-iterator';
 import TarIterator, { type TarCodedError, TarErrorCode } from 'tar-iterator';
 import url from 'url';
 import zlib from 'zlib';
@@ -44,9 +45,16 @@ interface Entry {
   linkname?: string;
   uid?: number;
   gid?: number;
-  mode?: number;
-  mtime?: Date;
+  mode?: string | number;
+  mtime?: number | Date;
 }
+
+type ForEachEntry = TarEntry & {
+  size?: number;
+  linkname?: string;
+  uid?: number;
+  gid?: number;
+};
 
 /**
  * Helper to extract all entries from a tar file
@@ -56,7 +64,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
   const entries: Entry[] = [];
 
   iterator.forEach(
-    (entry): void => {
+    (entry: ForEachEntry): void => {
       entries.push({
         path: entry.path,
         type: entry.type,
@@ -69,7 +77,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
       });
       entry.destroy();
     },
-    (err): void => {
+    (err?: Error): void => {
       if (err) return callback(err);
       callback(null, entries);
     }
@@ -118,7 +126,7 @@ describe('TarExtract - Format Support', () => {
         assert.strictEqual(entry.type, 'file', 'Entry should be a file, not a directory');
 
         // Verify the file has content (directories have size 0)
-        assert.ok(entry.size > 0, 'File should have non-zero size');
+        assert.ok((entry.size ?? 0) > 0, 'File should have non-zero size');
         assert.strictEqual(entry.size, 51, 'File should have correct size');
         done();
       });
@@ -190,7 +198,7 @@ describe('TarExtract - Format Support', () => {
       const entries: Entry[] = [];
 
       iterator.forEach(
-        (entry): void => {
+        (entry: ForEachEntry): void => {
           entries.push({
             path: entry.path,
             type: entry.type,
@@ -198,7 +206,7 @@ describe('TarExtract - Format Support', () => {
           });
           entry.destroy();
         },
-        (err): void => {
+        (err?: Error): void => {
           if (err) return done(err);
 
           // GitHub archives have PAX global headers - verify extraction works
@@ -255,13 +263,13 @@ describe('TarExtract - Format Support', () => {
       const iterator = new TarIterator(tarPath);
 
       iterator.forEach(
-        (entry): void => {
+        (entry: TarEntry): void => {
           entry.destroy();
         },
-        (err) => {
+        (err?: Error) => {
           // V7 should fail with unknown format error
           assert.ok(err, 'Should fail for V7 format');
-          assert.ok(err.message.indexOf('unknown format') !== -1 || err.message.indexOf('Invalid tar header') !== -1, 'Should fail with format error');
+          assert.ok(err?.message.indexOf('unknown format') !== -1 || err?.message.indexOf('Invalid tar header') !== -1, 'Should fail with format error');
           done();
         }
       );
@@ -417,13 +425,13 @@ describe('TarExtract - Error Handling', () => {
     const iterator = new TarIterator(corruptedTarPath);
 
     iterator.forEach(
-      (entry): void => {
+      (entry: TarEntry): void => {
         entry.destroy();
       },
-      (err) => {
+      (err?: Error) => {
         // Should fail with checksum/corruption error
         assert.ok(err, 'Should fail for corrupted checksum');
-        assert.ok(err.message.indexOf('checksum') !== -1 || err.message.indexOf('Invalid tar header') !== -1 || err.message.indexOf('corrupted') !== -1, `Should fail with checksum error, got: ${err.message}`);
+        assert.ok(err?.message.indexOf('checksum') !== -1 || err?.message.indexOf('Invalid tar header') !== -1 || err?.message.indexOf('corrupted') !== -1, `Should fail with checksum error, got: ${err?.message}`);
         // Verify error code for programmatic handling
         assert.strictEqual((err as TarCodedError).code, TarErrorCode.INVALID_CHECKSUM, 'Should have INVALID_CHECKSUM error code');
         done();
@@ -489,26 +497,26 @@ describe('TarExtract - File Content', () => {
     const extractPath = path.join(TMP_DIR, 'gnu-content-test');
 
     iterator.forEach(
-      (entry, callback): void => {
+      (entry: TarEntry, cb: (err?: Error, done?: boolean) => void): void => {
         if (entry.path === 'test.txt' && entry.type === 'file') {
           // Extract file using the proper create() API
           entry.create(extractPath, { force: true }, (err?: Error) => {
-            if (err) return callback(err);
+            if (err) return cb(err);
             // Read extracted file content
             fs.readFile(path.join(extractPath, 'test.txt'), 'utf8', (readErr, content) => {
-              if (readErr) return callback(readErr);
+              if (readErr) return cb(readErr);
               contentRead = content;
-              callback();
+              cb();
             });
           });
         } else {
           entry.destroy();
-          callback();
+          cb();
         }
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err): void => {
+      (err?: Error): void => {
         if (err) return done(err);
         // Verify we actually read the expected content
         assert.strictEqual(contentRead, 'Hello, world!\n', 'File content should match expected value');
@@ -526,7 +534,7 @@ describe('TarExtract - Compression', () => {
     const entries: Entry[] = [];
 
     iterator.forEach(
-      (entry): void => {
+      (entry: ForEachEntry): void => {
         entries.push({
           path: entry.path,
           type: entry.type,
@@ -534,7 +542,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err): void => {
+      (err?: Error): void => {
         if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -558,7 +566,7 @@ describe('TarExtract - Compression', () => {
     const entries: Entry[] = [];
 
     iterator.forEach(
-      (entry): void => {
+      (entry: ForEachEntry): void => {
         entries.push({
           path: entry.path,
           type: entry.type,
@@ -566,7 +574,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err): void => {
+      (err?: Error): void => {
         if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -595,18 +603,18 @@ describe('TarExtract - GNU Sparse Files', () => {
     const extractPath = path.join(TMP_DIR, 'sparse-test');
 
     iterator.forEach(
-      (entry, callback): void => {
+      (entry: ForEachEntry, cb: (err?: Error, done?: boolean) => void): void => {
         assert.strictEqual(entry.path, 'sparse-test.txt', 'Should have correct filename');
         assert.strictEqual(entry.type, 'file', 'Should report type as file (not gnu-sparse)');
-        assert.strictEqual((entry as unknown as Entry).size, 1024, 'Should report reconstructed file size');
+        assert.strictEqual(entry.size, 1024, 'Should report reconstructed file size');
 
         // Extract file using the proper create() API
         entry.create(extractPath, { force: true }, (err?: Error) => {
-          if (err) return callback(err);
+          if (err) return cb(err);
 
           // Read extracted file content
           fs.readFile(path.join(extractPath, 'sparse-test.txt'), (readErr, content) => {
-            if (readErr) return callback(readErr);
+            if (readErr) return cb(readErr);
 
             // Verify content
             assert.strictEqual(content.length, 1024, 'Reconstructed content should be 1024 bytes');
@@ -628,13 +636,13 @@ describe('TarExtract - GNU Sparse Files', () => {
               }
             }
             assert.ok(holesCorrect, 'Holes should be filled with zeros');
-            callback();
+            cb();
           });
         });
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err): void => {
+      (err?: Error): void => {
         if (err) return done(err);
         done();
       }
