@@ -77,7 +77,7 @@ function extractEntries(tarPath: string, callback: (err: Error | null, entries?:
       });
       entry.destroy();
     },
-    (err?: Error): void => {
+    (err?: Error | null): void => {
       if (err) return callback(err);
       callback(null, entries);
     }
@@ -206,7 +206,7 @@ describe('TarExtract - Format Support', () => {
           });
           entry.destroy();
         },
-        (err?: Error): void => {
+        (err?: Error | null): void => {
           if (err) return done(err);
 
           // GitHub archives have PAX global headers - verify extraction works
@@ -266,7 +266,7 @@ describe('TarExtract - Format Support', () => {
         (entry: TarEntry): void => {
           entry.destroy();
         },
-        (err?: Error) => {
+        (err?: Error | null) => {
           // V7 should fail with unknown format error
           assert.ok(err, 'Should fail for V7 format');
           assert.ok(err?.message.indexOf('unknown format') !== -1 || err?.message.indexOf('Invalid tar header') !== -1, 'Should fail with format error');
@@ -428,7 +428,7 @@ describe('TarExtract - Error Handling', () => {
       (entry: TarEntry): void => {
         entry.destroy();
       },
-      (err?: Error) => {
+      (err?: Error | null) => {
         // Should fail with checksum/corruption error
         assert.ok(err, 'Should fail for corrupted checksum');
         assert.ok(err?.message.indexOf('checksum') !== -1 || err?.message.indexOf('Invalid tar header') !== -1 || err?.message.indexOf('corrupted') !== -1, `Should fail with checksum error, got: ${err?.message}`);
@@ -497,10 +497,10 @@ describe('TarExtract - File Content', () => {
     const extractPath = path.join(TMP_DIR, 'gnu-content-test');
 
     iterator.forEach(
-      (entry: TarEntry, cb: (err?: Error, done?: boolean) => void): void => {
+      (entry: TarEntry, cb: (err?: Error | null, done?: boolean) => void): void => {
         if (entry.path === 'test.txt' && entry.type === 'file') {
           // Extract file using the proper create() API
-          entry.create(extractPath, { force: true }, (err?: Error) => {
+          entry.create(extractPath, { force: true }, (err?: Error | null) => {
             if (err) return cb(err);
             // Read extracted file content
             fs.readFile(path.join(extractPath, 'test.txt'), 'utf8', (readErr, content) => {
@@ -516,7 +516,7 @@ describe('TarExtract - File Content', () => {
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err?: Error): void => {
+      (err?: Error | null): void => {
         if (err) return done(err);
         // Verify we actually read the expected content
         assert.strictEqual(contentRead, 'Hello, world!\n', 'File content should match expected value');
@@ -542,7 +542,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err?: Error): void => {
+      (err?: Error | null): void => {
         if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -574,7 +574,7 @@ describe('TarExtract - Compression', () => {
         });
         entry.destroy();
       },
-      (err?: Error): void => {
+      (err?: Error | null): void => {
         if (err) return done(err);
         assert.ok(entries.length > 0, 'Should have entries');
         // Check for each type using .some() (ES5 compatible, unlike Set)
@@ -603,13 +603,13 @@ describe('TarExtract - GNU Sparse Files', () => {
     const extractPath = path.join(TMP_DIR, 'sparse-test');
 
     iterator.forEach(
-      (entry: ForEachEntry, cb: (err?: Error, done?: boolean) => void): void => {
+      (entry: ForEachEntry, cb: (err?: Error | null, done?: boolean) => void): void => {
         assert.strictEqual(entry.path, 'sparse-test.txt', 'Should have correct filename');
         assert.strictEqual(entry.type, 'file', 'Should report type as file (not gnu-sparse)');
         assert.strictEqual(entry.size, 1024, 'Should report reconstructed file size');
 
         // Extract file using the proper create() API
-        entry.create(extractPath, { force: true }, (err?: Error) => {
+        entry.create(extractPath, { force: true }, (err?: Error | null) => {
           if (err) return cb(err);
 
           // Read extracted file content
@@ -642,7 +642,7 @@ describe('TarExtract - GNU Sparse Files', () => {
       },
       // Use callbacks: true to wait for async extraction to complete
       { callbacks: true },
-      (err?: Error): void => {
+      (err?: Error | null): void => {
         if (err) return done(err);
         done();
       }

@@ -19,10 +19,10 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.tar');
 
-function extract(iterator: TarIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+function extract(iterator: TarIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error | null) => void) {
   const links: Entry[] = [];
   iterator.forEach(
-    (entry: Entry, cb: (err?: Error, done?: boolean) => void) => {
+    (entry: Entry, cb: (err?: Error | null, done?: boolean) => void) => {
       if (entry.type === 'link') {
         links.unshift(entry);
         cb();
@@ -32,7 +32,7 @@ function extract(iterator: TarIterator, dest: string, options: ExtractOptions & 
       } else entry.create(dest, options, cb);
     },
     { callbacks: true, concurrency: options.concurrency },
-    (err?: Error) => {
+    (err?: Error | null) => {
       if (err) return callback(err);
 
       // create links after directories and files
@@ -46,7 +46,7 @@ function extract(iterator: TarIterator, dest: string, options: ExtractOptions & 
   );
 }
 
-function verify(options: { strip?: number; [key: string]: unknown }, callback: (err?: Error) => void) {
+function verify(options: { strip?: number; [key: string]: unknown }, callback: (err?: Error | null) => void) {
   // When strip is used, files are extracted directly to TARGET
   // Otherwise they're in TARGET/data (the archive's root directory)
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
@@ -81,7 +81,7 @@ describe('callback', () => {
         (entry: Entry): void => {
           entry.destroy();
         },
-        (err?: Error) => {
+        (err?: Error | null) => {
           if (err) return done(err);
 
           assert.ok(!iterator.extract);
