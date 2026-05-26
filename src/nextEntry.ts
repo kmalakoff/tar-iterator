@@ -8,7 +8,7 @@ import type { TarHeader } from './tar/headers.ts';
 import type { Entry, EntryCallback } from './types.ts';
 
 export type TarNext = () => void;
-export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => void;
+export type NextCallback = (error?: Error | null, entry?: Entry, next?: TarNext) => void;
 
 export default function nextEntry(next: TarNext, iterator: Iterator, callback: EntryCallback): void {
   if (!iterator.lock || iterator.isDone()) {
@@ -18,7 +18,7 @@ export default function nextEntry(next: TarNext, iterator: Iterator, callback: E
   const extract = iterator.extract;
   if (!extract) return callback(new Error('Extract missing'));
 
-  const nextCallback = once(((err?: Error, entry?: Entry, next?: TarNext) => {
+  const nextCallback = once(((err?: Error | null, entry?: Entry, next?: TarNext) => {
     extract.removeListener('entry', onEntry);
     extract.removeListener('error', onError);
     extract.removeListener('finish', onEnd);

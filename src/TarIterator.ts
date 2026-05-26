@@ -17,7 +17,7 @@ export default class TarIterator extends BaseIterator<Entry> {
     super(options);
     const lock = new Lock();
     this.lock = lock;
-    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err ?? undefined);
+    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err);
 
     let cancelled = false;
     const setup = (): void => {
@@ -27,7 +27,7 @@ export default class TarIterator extends BaseIterator<Entry> {
 
     this.extract = new TarExtract();
 
-    const pipe = (cb: (err?: Error) => void): void => {
+    const pipe = (cb: (err?: Error | null) => void): void => {
       try {
         if (typeof source === 'string') source = fs.createReadStream(source);
       } catch (err) {
@@ -40,7 +40,7 @@ export default class TarIterator extends BaseIterator<Entry> {
         if (typeof s.destroy === 'function') s.destroy();
       });
 
-      const end = once(cb as unknown as CallFn) as unknown as (err?: Error) => void;
+      const end = once(cb as unknown as CallFn) as unknown as (err?: Error | null) => void;
       const self = this;
       let firstData = true;
       (source as NodeJS.ReadableStream).on('data', function onData(chunk) {
@@ -59,14 +59,14 @@ export default class TarIterator extends BaseIterator<Entry> {
         if (self.extract) self.extract.end();
       });
     };
-    pipe((err?: Error) => {
+    pipe((err?: Error | null) => {
       this.processing.remove(setup);
       if (this.done || cancelled) return;
       err ? this.end(err) : this.push(nextEntry.bind(null, null as unknown as TarNext) as unknown as Parameters<typeof this.push>[0]);
     });
   }
 
-  end(err?: Error) {
+  end(err?: Error | null) {
     const lock = this.lock;
     if (lock) {
       this.lock = null;
