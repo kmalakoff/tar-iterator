@@ -3,6 +3,7 @@ import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
+import type { Entry, ExtractOptions } from 'tar-iterator';
 import TarIterator from 'tar-iterator';
 import url from 'url';
 
@@ -15,8 +16,8 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.tar');
 
-async function extract(iterator, dest, options) {
-  const links = [];
+async function extract(iterator: TarIterator, dest: string, options: ExtractOptions) {
+  const links: Entry[] = [];
   for await (const entry of iterator) {
     if (entry.type === 'link') links.unshift(entry);
     else if (entry.type === 'symlink') links.push(entry);
@@ -27,7 +28,7 @@ async function extract(iterator, dest, options) {
   for (const entry of links) await entry.create(dest, options);
 }
 
-async function verify(options) {
+async function verify(options: ExtractOptions & { strip?: number }) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   const actual = await getStats(statsPath);
   assert.deepEqual(actual, fixture.expected);

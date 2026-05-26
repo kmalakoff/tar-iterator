@@ -5,6 +5,7 @@ import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
 import Queue from 'queue-cb';
+import type { Entry, ExtractOptions } from 'tar-iterator';
 import TarIterator from 'tar-iterator';
 import url from 'url';
 import zlib from 'zlib';
@@ -19,11 +20,11 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.tar');
 
-function extract(iterator, dest, options, callback) {
-  const links = [];
+function extract(iterator: TarIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+  const links: Entry[] = [];
   iterator
     .forEach(
-      (entry) => {
+      (entry: Entry) => {
         if (entry.type === 'link') links.unshift(entry);
         else if (entry.type === 'symlink') links.push(entry);
         else return entry.create(dest, options);
@@ -36,7 +37,10 @@ function extract(iterator, dest, options, callback) {
       for (let index = 0; index < links.length; index++) {
         ((entry) => {
           queue.defer((callback) => {
-            entry.create(dest, options).then(callback).catch(callback);
+            entry
+              .create(dest, options)
+              .then(() => callback())
+              .catch(callback);
           });
         })(links[index]);
       }
@@ -45,7 +49,7 @@ function extract(iterator, dest, options, callback) {
     .catch(callback);
 }
 
-function verify(options, callback) {
+function verify(options: { strip?: number; [key: string]: unknown }, callback: (err?: Error) => void) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   getStats(statsPath, (err, actual) => {
     if (err) return callback(err);
@@ -87,14 +91,12 @@ describe('promise', () => {
     it('destroy entries', (done) => {
       const iterator = new TarIterator(fixture.path);
       iterator.forEach(
-        (entry): void => {
+        (entry: Entry): void => {
           entry.destroy();
         },
-        (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+        (err?: Error) => {
+          if (err) return done(err);
+
           assert.ok(!iterator.extract);
           done();
         }
@@ -103,7 +105,7 @@ describe('promise', () => {
 
     it('extract - no strip - concurrency 1', (done) => {
       const options = { now: new Date(), concurrency: 1 };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -111,7 +113,7 @@ describe('promise', () => {
 
     it('extract - no strip - concurrency 4', (done) => {
       const options = { now: new Date(), concurrency: 4 };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -119,7 +121,7 @@ describe('promise', () => {
 
     it('extract - no strip - concurrency Infinity', (done) => {
       const options = { now: new Date(), concurrency: Infinity };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -128,7 +130,7 @@ describe('promise', () => {
     it('extract - stream', (done) => {
       const options = { now: new Date() };
       const source = fs.createReadStream(fixture.path);
-      extract(new TarIterator(source), TARGET, options, (err) => {
+      extract(new TarIterator(source), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -138,7 +140,7 @@ describe('promise', () => {
       const options = { now: new Date() };
       const bz2Fixture = getFixture('fixture.tar.bz2');
       const source = fs.createReadStream(bz2Fixture.path).pipe(bz2());
-      extract(new TarIterator(source), TARGET, options, (err) => {
+      extract(new TarIterator(source), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -148,7 +150,7 @@ describe('promise', () => {
       const options = { now: new Date() };
       const gzFixture = getFixture('fixture.tar.gz');
       const source = fs.createReadStream(gzFixture.path).pipe(zlib.createUnzip());
-      extract(new TarIterator(source), TARGET, options, (err) => {
+      extract(new TarIterator(source), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -156,7 +158,7 @@ describe('promise', () => {
 
     it('extract - strip 1', (done) => {
       const options = { now: new Date(), strip: 1 };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         if (err) return done(err);
         verify(options, done);
       });
@@ -164,16 +166,16 @@ describe('promise', () => {
 
     it('extract multiple times', (done) => {
       const options = { now: new Date(), strip: 1 };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         if (err) return done(err);
 
-        verify(options, (err) => {
+        verify(options, (err?: Error) => {
           if (err) return done(err);
 
-          extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+          extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
             assert.ok(err);
 
-            extract(new TarIterator(fixture.path), TARGET, { force: true, ...options }, (err) => {
+            extract(new TarIterator(fixture.path), TARGET, { force: true, ...options }, (err?: Error) => {
               if (err) return done(err);
               verify(options, done);
             });
@@ -186,7 +188,7 @@ describe('promise', () => {
   describe('unhappy path', () => {
     it('should fail with bad path', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new TarIterator(`${fixture.path}does-not-exist`), TARGET, options, (err) => {
+      extract(new TarIterator(`${fixture.path}does-not-exist`), TARGET, options, (err?: Error) => {
         assert.ok(!!err);
         done();
       });
@@ -194,7 +196,7 @@ describe('promise', () => {
 
     it('should fail with bad stream', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new TarIterator(fs.createReadStream(`${fixture.path}does-not-exist`)), TARGET, options, (err) => {
+      extract(new TarIterator(fs.createReadStream(`${fixture.path}does-not-exist`)), TARGET, options, (err?: Error) => {
         assert.ok(!!err);
         done();
       });
@@ -202,7 +204,7 @@ describe('promise', () => {
 
     it('should fail with too large strip', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new TarIterator(fixture.path), TARGET, options, (err) => {
+      extract(new TarIterator(fixture.path), TARGET, options, (err?: Error) => {
         assert.ok(!!err);
         done();
       });
