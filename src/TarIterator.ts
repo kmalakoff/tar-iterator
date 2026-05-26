@@ -1,10 +1,10 @@
+import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
 import BaseIterator, { Lock } from 'extract-base-iterator';
 import fs from 'graceful-fs';
-
+import type { TarNext } from './nextEntry.ts';
 import nextEntry from './nextEntry.ts';
 import TarExtract from './tar/TarExtract.ts';
-
 import type { Entry, ExtractOptions } from './types.ts';
 
 export default class TarIterator extends BaseIterator<Entry> {
@@ -15,8 +15,9 @@ export default class TarIterator extends BaseIterator<Entry> {
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
-    this.lock = new Lock();
-    this.lock.onDestroy = (err) => BaseIterator.prototype.end.call(this, err);
+    const lock = new Lock();
+    this.lock = lock;
+    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err ?? undefined);
 
     let cancelled = false;
     const setup = (): void => {
@@ -24,26 +25,22 @@ export default class TarIterator extends BaseIterator<Entry> {
     };
     this.processing.push(setup);
 
-    // Use our pure TarExtract instead of tar-stream-compat
-    // Note: options passed here are ExtractOptions (strip, force, etc.)
-    // TarExtract uses TarExtractOptions (filenameEncoding, etc.) which is different
     this.extract = new TarExtract();
 
-    const pipe = (cb) => {
+    const pipe = (cb: (err?: Error) => void): void => {
       try {
         if (typeof source === 'string') source = fs.createReadStream(source);
       } catch (err) {
-        cb(err);
+        cb(err as Error);
       }
 
-      // Register cleanup for source stream
       const stream = source as NodeJS.ReadableStream;
-      this.lock.registerCleanup(() => {
+      lock.registerCleanup(() => {
         const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
         if (typeof s.destroy === 'function') s.destroy();
       });
 
-      const end = once(cb);
+      const end = once(cb as unknown as CallFn) as unknown as (err?: Error) => void;
       const self = this;
       let firstData = true;
       (source as NodeJS.ReadableStream).on('data', function onData(chunk) {
@@ -54,28 +51,27 @@ export default class TarIterator extends BaseIterator<Entry> {
             end();
           }
         } catch (err) {
-          // Handle synchronous errors from TarExtract (e.g., invalid format)
-          end(err);
+          end(err as Error);
         }
       });
-      (source as NodeJS.ReadableStream).on('error', end);
+      (source as NodeJS.ReadableStream).on('error', end as (err: Error) => void);
       (source as NodeJS.ReadableStream).on('end', function onEnd() {
         if (self.extract) self.extract.end();
       });
     };
-    pipe((err) => {
+    pipe((err?: Error) => {
       this.processing.remove(setup);
-      if (this.done || cancelled) return; // done
-      err ? this.end(err) : this.push(nextEntry.bind(null, null));
+      if (this.done || cancelled) return;
+      err ? this.end(err) : this.push(nextEntry.bind(null, null as unknown as TarNext) as unknown as Parameters<typeof this.push>[0]);
     });
   }
 
   end(err?: Error) {
     const lock = this.lock;
     if (lock) {
-      this.lock = null; // Clear FIRST to prevent re-entrancy
-      lock.err = err;
-      lock.release(); // Lock.__destroy() handles BaseIterator.end()
+      this.lock = null;
+      lock.err = err ?? null;
+      lock.release();
     }
     this.extract = null;
   }

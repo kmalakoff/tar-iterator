@@ -8,8 +8,9 @@
 
 import assert from 'assert';
 import { exec as execCallback } from 'child_process';
+import spawnCallback from 'cross-spawn-cb';
 import fs from 'fs';
-import Iterator from 'fs-iterator';
+import Iterator, { type Entry as FSEntry } from 'fs-iterator';
 import { rmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
@@ -49,23 +50,18 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   const iterator = new Iterator(dirPath, { alwaysStat: true, lstat: true });
 
   iterator.forEach(
-    (entry): void => {
-      // entry.path is already relative to dirPath
+    (entry: FSEntry): void => {
+      if (!entry.stats) return;
+      const s = entry.stats as import('fs').Stats;
       stats[entry.path] = {
-        size: entry.stats.size,
-        mode: entry.stats.mode,
-        mtime: entry.stats.mtime instanceof Date ? entry.stats.mtime.getTime() : 0,
-        type: entry.stats.isDirectory() ? 'directory' : entry.stats.isFile() ? 'file' : entry.stats.isSymbolicLink() ? 'symlink' : 'other',
+        size: s.size,
+        mode: s.mode,
+        mtime: s.mtime instanceof Date ? s.mtime.getTime() : 0,
+        type: s.isDirectory() ? 'directory' : s.isFile() ? 'file' : s.isSymbolicLink() ? 'symlink' : 'other',
       };
     },
     { concurrency: 1024 },
-    (err) => {
-      if (err) {
-        callback(err);
-      } else {
-        callback(null, stats);
-      }
-    }
+    (err) => (err ? callback(err) : callback(null, stats))
   );
 }
 
@@ -151,10 +147,8 @@ describe('Comparison - tar-iterator vs native tar', () => {
       if (!fs.existsSync(CACHE_PATH)) {
         console.log(`Downloading ${TAR_URL}...`);
         getFile(TAR_URL, CACHE_PATH, (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+          if (err) return done(err);
+
           console.log('Download complete');
           performExtractions(done);
         });
@@ -171,7 +165,7 @@ describe('Comparison - tar-iterator vs native tar', () => {
 
       // Extract with native tar
       console.log('Extracting with native tar...');
-      execCallback(`cd "${TMP_DIR}" && tar -xzf "${CACHE_PATH}"`, (err) => {
+      spawnCallback('tar', ['-xzf', CACHE_PATH, '-C', TMP_DIR], (err) => {
         if (err) return callback(err);
 
         // Find the extracted directory (should be node-v24.12.0-linux-x64)
@@ -188,12 +182,9 @@ describe('Comparison - tar-iterator vs native tar', () => {
         console.log('Extracting with tar-iterator...');
         const options = { now: new Date(), strip: 1 };
         extractWithTarIterator(CACHE_PATH, TAR_ITERATOR_EXTRACT_DIR, options, (err) => {
-          if (err) {
-            callback(err);
-          } else {
-            console.log('Both extractions complete');
-            callback();
-          }
+          if (err) return callback(err);
+          console.log('Both extractions complete');
+          callback();
         });
       });
     }
@@ -208,15 +199,14 @@ describe('Comparison - tar-iterator vs native tar', () => {
     // Collect stats from both directories
     console.log('Collecting stats from native tar extraction...');
     collectStats(TAR_EXTRACT_DIR, (err, statsTar) => {
-      if (err) {
-        done(err);
-        return;
-      }
+      if (err) return done(err);
 
       console.log('Collecting stats from tar-iterator extraction...');
       collectStats(TAR_ITERATOR_EXTRACT_DIR, (err, statsTarIterator) => {
-        if (err) {
-          done(err);
+        if (err) return done(err);
+
+        if (!statsTar || !statsTarIterator) {
+          done(new Error('Failed to collect stats'));
           return;
         }
 
@@ -251,12 +241,8 @@ describe('Comparison - tar-iterator vs native tar', () => {
               differences.push(`Size mismatch for ${path}: native=${statTar.size}, tar-iterator=${statTarIterator.size}`);
             }
 
-            // Check mode (permissions), but allow for minor differences due to umask
-            // Use Number() to handle BigInt on older Windows Node versions
-            const modeDiff = Math.abs(Number(statTar.mode) - Number(statTarIterator.mode));
-            if (modeDiff > 0o22) {
-              // Allow up to umask differences (typically 0o022)
-              differences.push(`Mode mismatch for ${path}: native=${statTar.mode.toString(8)}, tar-iterator=${statTarIterator.mode.toString(8)}`);
+            if (Number(statTar.mode) !== Number(statTarIterator.mode)) {
+              differences.push(`Mode mismatch for ${path}: native=${Number(statTar.mode).toString(8)}, tar-iterator=${Number(statTarIterator.mode).toString(8)}`);
             }
           }
         }
