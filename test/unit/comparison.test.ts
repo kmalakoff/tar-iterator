@@ -86,7 +86,7 @@ function checkToolAvailable(checkCmd: string, callback: (available: boolean) => 
 /**
  * Extract using tar-iterator with entry.create() API
  */
-function extractWithTarIterator(cachePath: string, destDir: string, options: { now: Date; strip: number }, callback: (err?: Error) => void): void {
+function extractWithTarIterator(cachePath: string, destDir: string, options: { now: Date; strip: number }, callback: (err?: Error | null) => void): void {
   const source = fs.createReadStream(cachePath).pipe(zlib.createUnzip());
   const iterator = new TarIterator(source);
   const links: Entry[] = [];
@@ -158,7 +158,7 @@ describe('Comparison - tar-iterator vs native tar', () => {
       }
     });
 
-    function performExtractions(callback: (err?: Error) => void): void {
+    function performExtractions(callback: (err?: Error | null) => void): void {
       // Clean up previous extractions
       removeDir(TAR_EXTRACT_DIR);
       removeDir(TAR_ITERATOR_EXTRACT_DIR);

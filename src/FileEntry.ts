@@ -25,7 +25,7 @@ export default class TarFileEntry extends FileEntry {
     options = typeof options === 'function' ? {} : ((options || {}) as ExtractOptions);
 
     if (typeof callback === 'function') {
-      const cb: NoParamCallback = (err?: Error) => {
+      const cb: NoParamCallback = (err?: Error | null) => {
         (callback as NoParamCallback)(err);
         if (this.lock) {
           this.lock.release();
@@ -36,7 +36,7 @@ export default class TarFileEntry extends FileEntry {
       return;
     }
 
-    return new Promise((resolve, reject) => this.create(dest, options as ExtractOptions, (err?: Error) => (err ? reject(err) : resolve(true))));
+    return new Promise((resolve, reject) => this.create(dest, options as ExtractOptions, (err?: Error | null) => (err ? reject(err) : resolve(true))));
   }
 
   _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): void {
@@ -48,9 +48,9 @@ export default class TarFileEntry extends FileEntry {
     const stream = this.stream;
     this.stream = null;
 
-    const cb = once(((err?: Error) => {
+    const cb = once(((err?: Error | null) => {
       err ? callback(err) : waitForAccess(fullPath, callback);
-    }) as unknown as CallFn) as unknown as (err?: Error) => void;
+    }) as unknown as CallFn) as unknown as (err?: Error | null) => void;
 
     try {
       const writeStream = fs.createWriteStream(fullPath);
