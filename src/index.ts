@@ -1,2 +1,2 @@
-export { default } from './TarIterator.js';
-export * from './types.js';
+export { default } from './TarIterator.ts';
+export * from './types.ts';
