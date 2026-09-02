@@ -2,8 +2,8 @@ import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } f
 import fs from 'fs';
 import oo from 'on-one';
 
-import type Lock from './lib/Lock.js';
-import type { ExtractOptions } from './types.js';
+import type Lock from './lib/Lock.ts';
+import type { ExtractOptions } from './types.ts';
 
 export default class TarFileEntry extends FileEntry {
   private lock: Lock;

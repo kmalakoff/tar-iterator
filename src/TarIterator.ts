@@ -3,10 +3,10 @@ import BaseIterator from 'extract-base-iterator';
 import fs from 'fs';
 import tarStream from 'tar-stream-compat';
 
-import Lock from './lib/Lock.js';
-import nextEntry from './nextEntry.js';
+import Lock from './lib/Lock.ts';
+import nextEntry from './nextEntry.ts';
 
-import type { ExtractOptions } from './types.js';
+import type { ExtractOptions } from './types.ts';
 
 export default class TarIterator extends BaseIterator<unknown> {
   lock: Lock;
