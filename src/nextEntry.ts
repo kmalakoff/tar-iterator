@@ -2,10 +2,10 @@ import once from 'call-once-fn';
 import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import compact from 'lodash.compact';
 import path from 'path';
-import FileEntry from './FileEntry.js';
-import type Iterator from './TarIterator.js';
+import FileEntry from './FileEntry.ts';
+import type Iterator from './TarIterator.ts';
 
-import type { Entry, EntryCallback } from './types.js';
+import type { Entry, EntryCallback } from './types.ts';
 
 export type TarNext = () => undefined;
 export type NextCallback = (error?: Error, entry?: Entry, next?: TarNext) => undefined;
