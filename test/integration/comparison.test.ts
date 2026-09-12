@@ -9,9 +9,10 @@
 import assert from 'assert';
 import { exec as execCallback } from 'child_process';
 import spawnCallback from 'cross-spawn-cb';
+import crypto from 'crypto';
 import fs from 'fs';
 import Iterator, { type Entry as FSEntry } from 'fs-iterator';
-import { rmSync } from 'fs-remove-compat';
+import { safeRmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
@@ -24,11 +25,22 @@ const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : 
 const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 
 // Test configuration
+// Source: Node.js v24.12.0 official Linux x64 binary, MIT license/provenance.
 const TAR_URL = 'https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.gz';
-const CACHE_DIR = path.join(__dirname, '..', '..', '.cache');
+const TAR_SHA256 = '6159227e0af7d7c3c6bb2fa900452b04a6cb8841a702a79acc613209d70b04d0';
+const CACHE_DIR = path.join(TMP_DIR, 'cache');
 const CACHE_PATH = path.join(CACHE_DIR, 'node-v24.12.0-linux-x64.tar.gz');
 const TAR_EXTRACT_DIR = path.join(TMP_DIR, 'tar');
 const TAR_ITERATOR_EXTRACT_DIR = path.join(TMP_DIR, 'tar-iterator');
+
+function hasExpectedSha256(filePath: string): boolean {
+  try {
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+    return digest === TAR_SHA256;
+  } catch (_err) {
+    return false;
+  }
+}
 
 /**
  * Interface for file stats collected from directory tree
@@ -70,7 +82,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
  */
 function removeDir(dirPath: string): void {
   if (fs.existsSync(dirPath)) {
-    rmSync(dirPath, { recursive: true, force: true });
+    safeRmSync(dirPath, { recursive: true, force: true });
   }
 }
 
@@ -143,11 +155,28 @@ describe('Comparison - tar-iterator vs native tar', () => {
         mkdirp.sync(TMP_DIR);
       }
 
-      // Download tar file if it doesn't exist
-      if (!fs.existsSync(CACHE_PATH)) {
+      // Download tar file if it is absent or invalid
+      if (!hasExpectedSha256(CACHE_PATH)) {
+        if (fs.existsSync(CACHE_PATH)) safeRmSync(CACHE_PATH, { force: true });
         console.log(`Downloading ${TAR_URL}...`);
-        getFile(TAR_URL, CACHE_PATH, (err) => {
-          if (err) return done(err);
+        const partialPath = `${CACHE_PATH}.partial-${process.pid}-${Date.now()}`;
+        getFile(TAR_URL, partialPath, (err) => {
+          if (err) {
+            safeRmSync(partialPath, { force: true });
+            return done(err);
+          }
+
+          if (!hasExpectedSha256(partialPath)) {
+            safeRmSync(partialPath, { force: true });
+            return done(new Error(`SHA-256 verification failed for ${TAR_URL}`));
+          }
+
+          try {
+            fs.renameSync(partialPath, CACHE_PATH);
+          } catch (renameErr) {
+            safeRmSync(partialPath, { force: true });
+            return done(renameErr as Error);
+          }
 
           console.log('Download complete');
           performExtractions(done);
