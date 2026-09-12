@@ -75,6 +75,26 @@ describe('iterator', function () {
   });
 
   describe('happy path', function () {
+    it('destroy iterator', function () {
+      var iterator = new TarIterator(path.join(DATA_DIR, 'fixture.tar'));
+      iterator.destroy();
+      assert.ok(true);
+    });
+
+    it('destroy entries', function (done) {
+      var iterator = new TarIterator(path.join(DATA_DIR, 'fixture.tar'));
+      iterator.forEach(
+        function (entry) {
+          entry.destroy();
+        },
+        function (err) {
+          assert.ok(!err);
+          assert.ok(!iterator.extract);
+          done();
+        }
+      );
+    });
+
     it('extract - no strip - concurrency 1', function (done) {
       var options = { now: new Date(), concurrency: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, function (err) {
