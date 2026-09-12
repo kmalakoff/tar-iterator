@@ -75,7 +75,7 @@ describe('iterator', function () {
   });
 
   describe('happy path', function () {
-    it.only('extract - no strip - concurrency 1', function (done) {
+    it('extract - no strip - concurrency 1', function (done) {
       var options = { now: new Date(), concurrency: 1 };
       extract(new TarIterator(path.join(DATA_DIR, 'fixture.tar')), TARGET, options, function (err) {
         assert.ok(!err);
