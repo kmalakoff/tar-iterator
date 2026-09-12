@@ -77,25 +77,25 @@ describe('asyncAwait', () => {
   });
 
   describe('happy path', () => {
-    it('extract - no strip - concurrency 1', async () => {
+    it('extract - no strip - sequential next', async () => {
+      const options = { now: new Date() };
+      await extract(new TarIterator(fixture.path), TARGET, options);
+      await verify(options);
+    });
+
+    it('extract - no strip - forEach concurrency 1', async () => {
       const options = { now: new Date(), concurrency: 1 };
-      await extract(new TarIterator(fixture.path), TARGET, options);
+      await extractForEach(new TarIterator(fixture.path), TARGET, options);
       await verify(options);
     });
 
-    it('extract - no strip - concurrency 4', async () => {
+    it('extract - no strip - forEach concurrency 4', async () => {
       const options = { now: new Date(), concurrency: 4 };
-      await extract(new TarIterator(fixture.path), TARGET, options);
+      await extractForEach(new TarIterator(fixture.path), TARGET, options);
       await verify(options);
     });
 
-    it('extract - no strip - concurrency Infinity', async () => {
-      const options = { now: new Date(), concurrency: Infinity };
-      await extract(new TarIterator(fixture.path), TARGET, options);
-      await verify(options);
-    });
-
-    it('extract - no strip - forEach', async () => {
+    it('extract - no strip - forEach concurrency Infinity', async () => {
       const options = { now: new Date(), concurrency: Infinity };
       await extractForEach(new TarIterator(fixture.path), TARGET, options);
       await verify(options);

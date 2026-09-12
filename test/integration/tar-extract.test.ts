@@ -25,8 +25,12 @@
  */
 
 import assert from 'assert';
+import crypto from 'crypto';
 import { allocBuffer } from 'extract-base-iterator';
 import fs from 'fs';
+import { safeRmSync } from 'fs-remove-compat';
+import getFile from 'get-file-compat';
+import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import type { Entry as TarEntry } from 'tar-iterator';
 import TarIterator, { type TarCodedError, TarErrorCode } from 'tar-iterator';
@@ -37,6 +41,12 @@ import bz2 from '../lib/bz2-stream.ts';
 const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
+const CACHE_DIR = path.join(TMP_DIR, 'cache');
+// Source: tar-stream, MIT license, commit 246572f479d92b0748b21c873e58c64a84a0b826.
+const TAR_STREAM_COMMIT = '246572f479d92b0748b21c873e58c64a84a0b826';
+const TAR_STREAM_URL = `https://github.com/mafintosh/tar-stream/archive/${TAR_STREAM_COMMIT}.tar.gz`;
+const TAR_STREAM_CACHE_PATH = path.join(CACHE_DIR, `tar-stream-${TAR_STREAM_COMMIT}.tar.gz`);
+const TAR_STREAM_SHA256 = '1456665cad2df40056ec18c2a73d4feb09103ce8bd4ec1606ce657e51455b8f9';
 
 interface Entry {
   path: string;
@@ -55,6 +65,15 @@ type ForEachEntry = TarEntry & {
   uid?: number;
   gid?: number;
 };
+
+function hasExpectedSha256(filePath: string): boolean {
+  try {
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+    return digest === TAR_STREAM_SHA256;
+  } catch (_err) {
+    return false;
+  }
+}
 
 /**
  * Helper to extract all entries from a tar file
@@ -180,48 +199,71 @@ describe('TarExtract - Format Support', () => {
     });
 
     // PAX global headers test - GitHub archives use 'g' type global headers
-    // The test fixture needs to be downloaded first: curl -L -o .tmp/fixtures/tar-stream-master.tar.gz "https://github.com/mafintosh/tar-stream/archive/refs/heads/master.tar.gz"
     it('extracts archives with PAX global headers (GitHub archives)', function (done) {
-      const fixtureDir = path.join(TMP_DIR, 'fixtures');
-      const fixturePath = path.join(fixtureDir, 'tar-stream-master.tar.gz');
+      this.timeout(120000);
 
-      // Skip if fixture doesn't exist (not downloaded)
-      if (!fs.existsSync(fixturePath)) {
-        console.log('    (skipping - fixture not downloaded)');
-        this.skip();
-        return;
-      }
+      mkdirp(CACHE_DIR, (mkdirErr) => {
+        if (mkdirErr) return done(mkdirErr);
 
-      // Create piped stream from gzipped tar
-      const source = fs.createReadStream(fixturePath).pipe(zlib.createUnzip());
-      const iterator = new TarIterator(source);
-      const entries: Entry[] = [];
+        const useArchive = (): void => {
+          const source = fs.createReadStream(TAR_STREAM_CACHE_PATH).pipe(zlib.createUnzip());
+          const iterator = new TarIterator(source);
+          const entries: Entry[] = [];
 
-      iterator.forEach(
-        (entry: ForEachEntry): void => {
-          entries.push({
-            path: entry.path,
-            type: entry.type,
-            size: entry.size,
-          });
-          entry.destroy();
-        },
-        (err?: Error | null): void => {
-          if (err) return done(err);
+          iterator.forEach(
+            (entry: ForEachEntry): void => {
+              entries.push({
+                path: entry.path,
+                type: entry.type,
+                size: entry.size,
+              });
+              entry.destroy();
+            },
+            (err?: Error | null): void => {
+              if (err) return done(err);
 
-          // GitHub archives have PAX global headers - verify extraction works
-          assert.ok(entries.length > 30, 'Should have many entries (GitHub archive)');
+              assert.ok(entries.length > 30, 'Should have many entries (GitHub archive)');
+              const archiveRoot = `tar-stream-${TAR_STREAM_COMMIT}`;
+              assert.ok(
+                entries.some((e) => e.path.indexOf(`${archiveRoot}/`) === 0),
+                `Should contain ${archiveRoot} directory`
+              );
+              assert.ok(
+                entries.some((e) => e.path === `${archiveRoot}/package.json` && e.type === 'file'),
+                'Should contain package.json file'
+              );
+              done();
+            }
+          );
+        };
 
-          // Verify expected structure of tar-stream archive
-          const hasMaster = entries.some((e) => e.path.indexOf('tar-stream-master') !== -1);
-          assert.ok(hasMaster, 'Should contain tar-stream-master directory');
-
-          const hasPackageJson = entries.some((e) => e.path.indexOf('package.json') !== -1 && e.type === 'file');
-          assert.ok(hasPackageJson, 'Should contain package.json file');
-
-          done();
+        if (fs.existsSync(TAR_STREAM_CACHE_PATH)) {
+          if (hasExpectedSha256(TAR_STREAM_CACHE_PATH)) return useArchive();
+          safeRmSync(TAR_STREAM_CACHE_PATH, { force: true });
         }
-      );
+
+        const partialPath = `${TAR_STREAM_CACHE_PATH}.partial-${process.pid}-${Date.now()}`;
+        getFile(TAR_STREAM_URL, partialPath, (err) => {
+          if (err) {
+            safeRmSync(partialPath, { force: true });
+            return done(err);
+          }
+
+          if (!hasExpectedSha256(partialPath)) {
+            safeRmSync(partialPath, { force: true });
+            return done(new Error(`SHA-256 verification failed for ${TAR_STREAM_URL}`));
+          }
+
+          try {
+            fs.renameSync(partialPath, TAR_STREAM_CACHE_PATH);
+          } catch (renameErr) {
+            safeRmSync(partialPath, { force: true });
+            return done(renameErr as Error);
+          }
+
+          useArchive();
+        });
+      });
     });
   });
 
