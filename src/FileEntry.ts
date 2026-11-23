@@ -1,6 +1,6 @@
 import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
-import { type FileAttributes, FileEntry, type Lock, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
+import { destroyStream, type FileAttributes, FileEntry, type Lock, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import fs from 'graceful-fs';
 import oo from 'on-one';
 
@@ -9,12 +9,18 @@ import type { ExtractOptions } from './types.ts';
 export default class TarFileEntry extends FileEntry {
   private lock: Lock | null;
   private stream: NodeJS.ReadableStream | null;
+  private streamError: Error | null = null;
+  private onEarlyError: ((err: Error) => void) | null = null;
 
   constructor(attributes: FileAttributes, stream: NodeJS.ReadableStream, lock: Lock) {
     super(attributes);
     this.stream = stream;
     this.lock = lock;
     this.lock.retain();
+    this.onEarlyError = (err: Error) => {
+      this.streamError = err;
+    };
+    stream.on('error', this.onEarlyError);
   }
 
   create(dest: string, callback: NoParamCallback): void;
@@ -47,6 +53,14 @@ export default class TarFileEntry extends FileEntry {
 
     const stream = this.stream;
     this.stream = null;
+    if (this.onEarlyError) {
+      stream.removeListener('error', this.onEarlyError);
+      this.onEarlyError = null;
+    }
+    if (this.streamError) {
+      callback(this.streamError);
+      return;
+    }
 
     const cb = once(((err?: Error | null) => {
       err ? callback(err) : waitForAccess(fullPath, callback);
@@ -56,9 +70,8 @@ export default class TarFileEntry extends FileEntry {
       const writeStream = fs.createWriteStream(fullPath);
 
       stream.on('error', (streamErr: Error) => {
-        const ws = writeStream as fs.WriteStream & { destroy?: () => void };
         writeStream.on('error', () => {});
-        if (typeof ws.destroy === 'function') ws.destroy();
+        destroyStream(writeStream);
         cb(streamErr);
       });
 
@@ -72,6 +85,11 @@ export default class TarFileEntry extends FileEntry {
   destroy() {
     super.destroy();
     if (this.stream) {
+      if (this.onEarlyError) {
+        this.stream.removeListener('error', this.onEarlyError);
+        this.onEarlyError = null;
+      }
+      this.stream.on('error', () => {});
       this.stream.resume();
       this.stream = null;
     }

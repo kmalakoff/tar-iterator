@@ -156,6 +156,24 @@ export default class TarExtract extends EventEmitter {
     this.emit('error', err);
   }
 
+  destroy(err?: Error): void {
+    if (this.finished && this.state === STATE_END) return;
+    this.finished = true;
+    this.state = STATE_END;
+    this.pendingEntry = null;
+    const activeStream = this.entryStream || this.sparseStream;
+    this.entryStream = null;
+    this.sparseStream = null;
+    if (err) {
+      if (activeStream && !activeStream.ended && activeStream.listeners('error').length > 0) {
+        activeStream.emit('error', err);
+      }
+      if (this.listeners('error').length > 0) {
+        this.emit('error', err);
+      }
+    }
+  }
+
   /**
    * Emit 'finish' if appropriate
    */

@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.1",
-    "extract-base-iterator": "^3.4.4",
+    "extract-base-iterator": "^3.5.0",
     "graceful-fs": "^4.2.11",
     "on-one": "^1.0.0"
   },
@@ -80,6 +80,7 @@
     "node-version-use": "*",
     "pinkie-promise": "*",
     "queue-cb": "^1.0.0",
+    "staged-cache": "^0.1.0",
     "through": "^2.1.0",
     "ts-dev-stack": "*",
     "tsds-config": "*",

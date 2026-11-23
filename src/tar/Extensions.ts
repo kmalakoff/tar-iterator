@@ -8,7 +8,7 @@
  * - PAX Global Headers (type 'g') - extended attributes for all entries
  */
 
-import { allocBufferUnsafe } from 'extract-base-iterator';
+import { bufferConcat } from 'extract-base-iterator';
 import { decodeLongPath, decodePax, type TarHeader } from './headers.ts';
 
 /**
@@ -58,7 +58,7 @@ export function finalizeExtension(state: ExtensionState, currentState: number, h
   const STATE_PAX_HEADER = 6;
 
   // Concatenate all collected data
-  const combined = concatBuffers(state.extensionData);
+  const combined = bufferConcat(state.extensionData);
   state.extensionData = [];
 
   switch (currentState) {
@@ -137,27 +137,4 @@ export function applyPaxToHeader(header: TarHeader, pax: Record<string, string>)
   if (pax.uname) header.uname = pax.uname;
   if (pax.gname) header.gname = pax.gname;
   if (pax.mtime) header.mtime = new Date(parseFloat(pax.mtime) * 1000);
-}
-
-/**
- * Concatenate buffers (Node 0.8 compatible)
- */
-export function concatBuffers(buffers: Buffer[]): Buffer {
-  if (buffers.length === 0) return Buffer.alloc ? Buffer.alloc(0) : new Buffer(0);
-  if (buffers.length === 1) return buffers[0];
-
-  const totalLength = buffers.reduce((sum, buf) => sum + buf.length, 0);
-
-  if (Buffer.concat) {
-    return Buffer.concat(buffers, totalLength);
-  }
-
-  // Node 0.8 fallback
-  const result = allocBufferUnsafe(totalLength);
-  let offset = 0;
-  for (let i = 0; i < buffers.length; i++) {
-    buffers[i].copy(result, offset);
-    offset += buffers[i].length;
-  }
-  return result;
 }

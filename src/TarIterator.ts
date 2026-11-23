@@ -1,7 +1,8 @@
 import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
-import BaseIterator, { Lock } from 'extract-base-iterator';
+import BaseIterator, { destroyStream, Lock } from 'extract-base-iterator';
 import fs from 'graceful-fs';
+import oo from 'on-one';
 import type { TarNext } from './nextEntry.ts';
 import nextEntry from './nextEntry.ts';
 import TarExtract from './tar/TarExtract.ts';
@@ -32,32 +33,54 @@ export default class TarIterator extends BaseIterator<Entry> {
         if (typeof source === 'string') source = fs.createReadStream(source);
       } catch (err) {
         cb(err as Error);
+        return;
       }
 
       const stream = source as NodeJS.ReadableStream;
       lock.registerCleanup(() => {
-        const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
-        if (typeof s.destroy === 'function') s.destroy();
+        destroyStream(stream);
       });
 
       const end = once(cb as unknown as CallFn) as unknown as (err?: Error | null) => void;
       const self = this;
       let firstData = true;
-      (source as NodeJS.ReadableStream).on('data', function onData(chunk) {
+      const onData = (chunk: Buffer): void => {
+        if (!self.extract) return;
         try {
-          if (self.extract) self.extract.write(chunk);
+          self.extract.write(chunk);
           if (firstData) {
             firstData = false;
             end();
           }
         } catch (err) {
-          end(err as Error);
+          fail(err as Error);
         }
-      });
-      (source as NodeJS.ReadableStream).on('error', end as (err: Error) => void);
-      (source as NodeJS.ReadableStream).on('end', function onEnd() {
-        if (self.extract) self.extract.end();
-      });
+      };
+      const fail = (err: Error): void => {
+        stream.removeListener('data', onData);
+        if (self.extract) self.extract.destroy(err);
+        if (firstData) {
+          firstData = false;
+          end(err);
+        } else {
+          self.end(err);
+        }
+      };
+      stream.on('data', onData);
+      oo(stream, ['error', 'end'], ((err?: Error | null) => {
+        if (err) {
+          fail(err);
+        } else {
+          stream.removeListener('data', onData);
+          if (firstData) {
+            firstData = false;
+            if (self.extract) self.extract.destroy();
+            self.end();
+          } else if (self.extract) {
+            self.extract.end();
+          }
+        }
+      }) as unknown as CallFn);
     };
     pipe((err?: Error | null) => {
       this.processing.remove(setup);
