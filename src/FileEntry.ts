@@ -68,15 +68,39 @@ export default class TarFileEntry extends FileEntry {
 
     try {
       const writeStream = fs.createWriteStream(fullPath);
+      let sourceError: Error | null = null;
+      let writeStreamOpened = false;
+      let writeStreamClosed = false;
+
+      writeStream.once('open', () => {
+        writeStreamOpened = true;
+      });
+      writeStream.once('close', () => {
+        writeStreamClosed = true;
+      });
 
       stream.on('error', (streamErr: Error) => {
+        sourceError = streamErr;
         writeStream.on('error', () => {});
-        destroyStream(writeStream);
-        cb(streamErr);
+        if (writeStreamClosed) {
+          cb(streamErr);
+        } else {
+          writeStream.once('close', () => cb(streamErr));
+          destroyStream(writeStream);
+          // Node 0.10-0.12 can leave a pending open unclosed after destroy().
+          const ws = writeStream as fs.WriteStream & { close?: () => void; closed?: boolean; fd?: number | null };
+          if (!writeStreamOpened && !writeStreamClosed && typeof ws.close === 'function') {
+            writeStream.once('open', () => {
+              if (!writeStreamClosed && !ws.closed && ws.fd !== null && typeof ws.close === 'function') ws.close();
+            });
+          }
+        }
       });
 
       stream.pipe(writeStream);
-      oo(writeStream, ['error', 'close', 'finish'], cb as unknown as CallFn);
+      oo(writeStream, ['error', 'close', 'finish'], (err?: Error | null) => {
+        if (!sourceError) cb(err);
+      });
     } catch (err) {
       cb(err as Error);
     }
